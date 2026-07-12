@@ -1,4 +1,4 @@
-package v3
+package ui
 
 import (
 	"github.com/gin-gonic/gin"
