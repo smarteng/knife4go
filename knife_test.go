@@ -75,10 +75,43 @@ func TestInitRegistersUIAtCustomDocumentPath(t *testing.T) {
 	}
 }
 
+func TestInitResolvesProviderOnlyOnce(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	calls := 0
+	provider := DocumentProviderFunc(func() ([]byte, error) {
+		calls++
+		return []byte(openAPI303Document), nil
+	})
+
+	if err := Init(router, provider); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+	if calls != 1 {
+		t.Fatalf("expected provider to be called once during initialization, got %d calls", calls)
+	}
+
+	for requestNumber := 0; requestNumber < 3; requestNumber++ {
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v3/api-docs", nil))
+
+		if response.Code != http.StatusOK {
+			t.Fatalf("request %d: expected status 200, got %d", requestNumber+1, response.Code)
+		}
+		if !bytes.Equal(response.Body.Bytes(), []byte(openAPI303Document)) {
+			t.Fatalf("request %d: expected exact OpenAPI document %q, got %q", requestNumber+1, openAPI303Document, response.Body.Bytes())
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("expected document requests not to resolve provider again, got %d calls", calls)
+	}
+}
+
 func TestInitRejectsInvalidDocumentProviders(t *testing.T) {
 	tests := []struct {
-		name     string
-		provider DocumentProvider
+		name         string
+		provider     DocumentProvider
+		wantContains string
 	}{
 		{name: "nil provider", provider: nil},
 		{
@@ -105,15 +138,47 @@ func TestInitRejectsInvalidDocumentProviders(t *testing.T) {
 				return []byte(`{"openapi":"3.1.0","info":{"title":"test","version":"1.0.0"},"paths":{}}`), nil
 			}),
 		},
+		{
+			name: "missing OpenAPI root field",
+			provider: DocumentProviderFunc(func() ([]byte, error) {
+				return []byte(`{"info":{"title":"test","version":"1.0.0"},"paths":{}}`), nil
+			}),
+			wantContains: "missing openapi version",
+		},
+		{
+			name: "non-string OpenAPI root field",
+			provider: DocumentProviderFunc(func() ([]byte, error) {
+				return []byte(`{"openapi":3,"info":{"title":"test","version":"1.0.0"},"paths":{}}`), nil
+			}),
+			wantContains: "invalid openapi version",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			gin.SetMode(gin.TestMode)
-			if err := Init(gin.New(), test.provider); err == nil {
+			err := Init(gin.New(), test.provider)
+			if err == nil {
 				t.Fatal("expected initialization error")
 			}
+			if test.wantContains != "" && !strings.Contains(err.Error(), test.wantContains) {
+				t.Fatalf("expected error to contain %q, got %q", test.wantContains, err)
+			}
 		})
+	}
+}
+
+func TestInitWrapsProviderError(t *testing.T) {
+	sentinel := errors.New("document unavailable")
+	err := Init(gin.New(), DocumentProviderFunc(func() ([]byte, error) {
+		return nil, sentinel
+	}))
+
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("expected Init error to wrap provider error %q, got %v", sentinel, err)
+	}
+	if !strings.Contains(err.Error(), "resolve OpenAPI document") {
+		t.Fatalf("expected contextual provider resolution error, got %q", err)
 	}
 }
 
