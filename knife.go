@@ -1,8 +1,12 @@
 package knife
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strings"
+
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag"
 
 	"github.com/jasonlabz/knife4go/internal/ui"
 	"github.com/jasonlabz/knife4go/internal/ui/knife"
@@ -14,45 +18,50 @@ import (
 	"github.com/jasonlabz/knife4go/internal/ui/knife/webjars/oauth"
 )
 
-// Config stores the Swagger document and UI path options.
-type Config struct {
-	docJson string
+// DocumentProvider supplies a complete OpenAPI 3.0 JSON document.
+type DocumentProvider interface {
+	OpenAPI() ([]byte, error)
+}
+
+// DocumentProviderFunc adapts a function to DocumentProvider.
+type DocumentProviderFunc func() ([]byte, error)
+
+// OpenAPI returns the document provided by f.
+func (f DocumentProviderFunc) OpenAPI() ([]byte, error) {
+	if f == nil {
+		return nil, fmt.Errorf("document provider is nil")
+	}
+	return f()
+}
+
+// Option configures Init.
+type Option func(*config)
+
+type config struct {
 	docPath string
 }
 
-// Opts configures InitSwaggerKnife.
-type Opts func(*Config)
-
-// Doc supplies the Swagger JSON document instead of reading the default Swaggo instance.
-func Doc(doc string) func(*Config) {
-	return func(c *Config) {
-		c.docJson = doc
-	}
-}
-
-// DocPath sets the path that serves the UI HTML document.
-func DocPath(path string) func(*Config) {
-	return func(c *Config) {
+// WithDocPath sets the path that serves the UI HTML document.
+func WithDocPath(path string) Option {
+	return func(c *config) {
 		c.docPath = path
 	}
 }
 
-// InitSwaggerKnife registers the single Swagger document UI and its static assets.
-func InitSwaggerKnife(router gin.IRouter, opts ...Opts) error {
-	config := Config{}
-	for _, opt := range opts {
-		opt(&config)
-	}
-	if config.docJson == "" {
-		jsonValue, err := swag.ReadDoc("swagger")
-		if err != nil {
-			return err
-		}
-		config.docJson = jsonValue
+// Init registers Knife4go's UI, document endpoint, and static assets.
+func Init(router gin.IRouter, provider DocumentProvider, options ...Option) error {
+	document, err := resolveOpenAPIDocument(provider)
+	if err != nil {
+		return err
 	}
 
-	ui.AddApiDocRouter(router, "", config.docJson)
-	ui.AddSwaggerResourcesRouter(router, "")
+	config := config{}
+	for _, option := range options {
+		option(&config)
+	}
+
+	ui.AddOpenAPIDocumentRouter(router, "", string(document))
+	ui.AddOpenAPIConfigRouter(router, "", openAPIDocumentURL(router))
 
 	knife.AddRouterOfDocHtml(router, config.docPath)
 
@@ -118,4 +127,61 @@ func InitSwaggerKnife(router gin.IRouter, opts ...Opts) error {
 	oauth.AddRouterOfOauth2Html(router)
 
 	return nil
+}
+
+// resolveOpenAPIDocument resolves and validates one OpenAPI 3.0 JSON document.
+func resolveOpenAPIDocument(provider DocumentProvider) ([]byte, error) {
+	if provider == nil {
+		return nil, fmt.Errorf("resolve OpenAPI document: provider is nil")
+	}
+
+	document, err := provider.OpenAPI()
+	if err != nil {
+		return nil, fmt.Errorf("resolve OpenAPI document: %w", err)
+	}
+	if len(bytes.TrimSpace(document)) == 0 {
+		return nil, fmt.Errorf("validate OpenAPI document: document is blank")
+	}
+
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(document, &root); err != nil {
+		return nil, fmt.Errorf("validate OpenAPI document JSON: %w", err)
+	}
+	versionJSON, ok := root["openapi"]
+	if !ok {
+		return nil, fmt.Errorf("validate OpenAPI document: missing openapi version")
+	}
+
+	var version string
+	if err := json.Unmarshal(versionJSON, &version); err != nil {
+		return nil, fmt.Errorf("validate OpenAPI document: invalid openapi version: %w", err)
+	}
+	if !isOpenAPI30Version(version) {
+		return nil, fmt.Errorf("validate OpenAPI document: unsupported version %q", version)
+	}
+
+	return document, nil
+}
+
+// isOpenAPI30Version reports whether version is an OpenAPI 3.0.x version.
+func isOpenAPI30Version(version string) bool {
+	patch, ok := strings.CutPrefix(version, "3.0.")
+	if !ok || patch == "" {
+		return false
+	}
+	for _, digit := range patch {
+		if digit < '0' || digit > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// openAPIDocumentURL returns the document URL registered on router.
+func openAPIDocumentURL(router gin.IRouter) string {
+	basePath := ""
+	if routerWithBasePath, ok := router.(interface{ BasePath() string }); ok {
+		basePath = routerWithBasePath.BasePath()
+	}
+	return strings.TrimSuffix(basePath, "/") + ui.API_DOCS_RELATIVE_PATH
 }

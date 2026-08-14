@@ -48,6 +48,33 @@ func TestInitRegistersOpenAPIDocumentAndUI(t *testing.T) {
 	}
 }
 
+func TestInitRegistersUIAtCustomDocumentPath(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	if err := Init(router, DocumentProviderFunc(func() ([]byte, error) {
+		return []byte(openAPI303Document), nil
+	}), WithDocPath("/catalog-docs.html")); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+
+	for _, testCase := range []struct {
+		path       string
+		wantStatus int
+	}{
+		{path: "/catalog-docs.html", wantStatus: http.StatusOK},
+		{path: "/doc.html", wantStatus: http.StatusNotFound},
+	} {
+		t.Run(testCase.path, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, testCase.path, nil))
+
+			if response.Code != testCase.wantStatus {
+				t.Fatalf("expected status %d, got %d", testCase.wantStatus, response.Code)
+			}
+		})
+	}
+}
+
 func TestInitRejectsInvalidDocumentProviders(t *testing.T) {
 	tests := []struct {
 		name     string

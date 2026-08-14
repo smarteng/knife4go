@@ -6,15 +6,13 @@ import (
 	"github.com/jasonlabz/knife4go/utils"
 )
 
-const (
-	// TODO 路径要改
-	API_DOCS_RELATIVE_PATH = constant.RootPath + "/v3/api-docs"
-)
+// API_DOCS_RELATIVE_PATH is the relative path that serves the OpenAPI document.
+const API_DOCS_RELATIVE_PATH = constant.RootPath + "/v3/api-docs"
 
-// @param content string swag int 命令生成的swagger.json文件里的内容
-func AddApiDocRouter(router gin.IRouter, path, swaggerJson string) {
+// AddOpenAPIDocumentRouter registers the serialized OpenAPI document endpoint.
+func AddOpenAPIDocumentRouter(router gin.IRouter, path, document string) {
 	if path == "" {
 		path = API_DOCS_RELATIVE_PATH
 	}
-	utils.GetJson(router, path, swaggerJson)
+	utils.GetJson(router, path, document)
 }
