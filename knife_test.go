@@ -1,6 +1,7 @@
 package knife
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,18 +17,19 @@ const openAPI303Document = `{"openapi":"3.0.3","info":{"title":"test","version":
 func TestInitRegistersOpenAPIDocumentAndUI(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	if err := Init(router, DocumentProviderFunc(func() (string, error) {
-		return openAPI303Document, nil
+	if err := Init(router, DocumentProviderFunc(func() ([]byte, error) {
+		return []byte(openAPI303Document), nil
 	})); err != nil {
 		t.Fatalf("unexpected initialization error: %v", err)
 	}
 
 	for _, testCase := range []struct {
-		path string
-		want string
+		path         string
+		wantDocument []byte
+		bodySnippet  string
 	}{
-		{path: "/v3/api-docs", want: openAPI303Document},
-		{path: "/doc.html", want: "knife4j-vue"},
+		{path: "/v3/api-docs", wantDocument: []byte(openAPI303Document)},
+		{path: "/doc.html", bodySnippet: "knife4j-vue"},
 	} {
 		t.Run(testCase.path, func(t *testing.T) {
 			response := httptest.NewRecorder()
@@ -36,11 +38,11 @@ func TestInitRegistersOpenAPIDocumentAndUI(t *testing.T) {
 			if response.Code != http.StatusOK {
 				t.Fatalf("expected status 200, got %d", response.Code)
 			}
-			if testCase.path == "/v3/api-docs" && response.Body.String() != testCase.want {
-				t.Fatalf("expected exact OpenAPI document %q, got %q", testCase.want, response.Body.String())
+			if testCase.wantDocument != nil && !bytes.Equal(response.Body.Bytes(), testCase.wantDocument) {
+				t.Fatalf("expected exact OpenAPI document %q, got %q", testCase.wantDocument, response.Body.Bytes())
 			}
-			if testCase.path == "/doc.html" && !strings.Contains(response.Body.String(), testCase.want) {
-				t.Fatalf("expected UI response to contain %q, got %q", testCase.want, response.Body.String())
+			if testCase.bodySnippet != "" && !strings.Contains(response.Body.String(), testCase.bodySnippet) {
+				t.Fatalf("expected UI response to contain %q, got %q", testCase.bodySnippet, response.Body.String())
 			}
 		})
 	}
@@ -54,26 +56,26 @@ func TestInitRejectsInvalidDocumentProviders(t *testing.T) {
 		{name: "nil provider", provider: nil},
 		{
 			name: "provider error",
-			provider: DocumentProviderFunc(func() (string, error) {
-				return "", errors.New("document unavailable")
+			provider: DocumentProviderFunc(func() ([]byte, error) {
+				return nil, errors.New("document unavailable")
 			}),
 		},
 		{
 			name: "blank document",
-			provider: DocumentProviderFunc(func() (string, error) {
-				return "", nil
+			provider: DocumentProviderFunc(func() ([]byte, error) {
+				return []byte{}, nil
 			}),
 		},
 		{
 			name: "invalid JSON",
-			provider: DocumentProviderFunc(func() (string, error) {
-				return "{", nil
+			provider: DocumentProviderFunc(func() ([]byte, error) {
+				return []byte("{"), nil
 			}),
 		},
 		{
 			name: "OpenAPI 3.1 document",
-			provider: DocumentProviderFunc(func() (string, error) {
-				return `{"openapi":"3.1.0","info":{"title":"test","version":"1.0.0"},"paths":{}}`, nil
+			provider: DocumentProviderFunc(func() ([]byte, error) {
+				return []byte(`{"openapi":"3.1.0","info":{"title":"test","version":"1.0.0"},"paths":{}}`), nil
 			}),
 		},
 	}
@@ -92,8 +94,8 @@ func TestInitUsesGroupPrefixInUIConfiguration(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	group := router.Group("/catalog")
-	if err := Init(group, DocumentProviderFunc(func() (string, error) {
-		return openAPI303Document, nil
+	if err := Init(group, DocumentProviderFunc(func() ([]byte, error) {
+		return []byte(openAPI303Document), nil
 	})); err != nil {
 		t.Fatalf("unexpected initialization error: %v", err)
 	}
