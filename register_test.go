@@ -137,11 +137,17 @@ func TestRegisterHonorsRouterBasePath(t *testing.T) {
 	if err := Register(router, Doc(openAPI303Document)); err != nil {
 		t.Fatalf("unexpected registration error: %v", err)
 	}
-	if got := routeContent(router.routes, "/catalog/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/catalog/v3/api-docs"`) {
-		t.Errorf("expected prefixed document URL in config, got %q", got)
+	// 注册路径保持相对（框架负责拼接前缀），basePath 只进入 swagger-config 内容
+	for _, want := range []string{"/v3/api-docs", "/v3/api-docs/swagger-config"} {
+		if !containsRoute(router.routes, want) {
+			t.Errorf("expected relative route %q to be registered", want)
+		}
 	}
-	if got := routeContent(router.routes, "/catalog/v3/api-docs"); string(got) != openAPI303Document {
-		t.Errorf("expected prefixed document route to serve the OpenAPI document, got %q", got)
+	if got := routeContent(router.routes, "/v3/api-docs"); string(got) != openAPI303Document {
+		t.Errorf("expected document route to serve the OpenAPI document, got %q", got)
+	}
+	if got := routeContent(router.routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/catalog/v3/api-docs"`) {
+		t.Errorf("expected prefixed document URL in config, got %q", got)
 	}
 }
 

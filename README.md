@@ -59,7 +59,7 @@ func main() {
 }
 ```
 
-最小可运行示例见 [`_examples/huma`](./_examples/huma)。传入 `huma.NewGroup` 创建的组可整体加前缀。
+最小可运行示例见 [`_examples/huma`](./_examples/huma)。传入 `huma.NewGroup` 创建的组时路由可整体加前缀，但 swagger-config 中的 url 保持根级相对路径；带前缀部署建议改用 gin 入口或根级 huma API。
 
 ## 文档来源
 

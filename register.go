@@ -60,16 +60,15 @@ func Register(router Router, opts ...Opts) error {
 	}
 	router.GET(docPath, ui.DocHtml.ContentType, ui.DocHtml.Content)
 
-	// OpenAPI 文档端点
-	router.GET(docURL, jsonContentType, []byte(config.docJson))
-
-	// UI 配置端点（Knife4j 前端据此加载文档与 oauth2 跳转）
+	// OpenAPI 文档端点与 UI 配置端点均以相对路径注册，由适配器/框架拼接自身前缀；
+	// basePath 只进入 swagger-config 内容，保证前端拿到的 url 是完整地址。
 	configContent := fmt.Sprintf(`{"configUrl": %q,"oauth2RedirectUrl": %q,"url": %q,"validatorUrl": ""}`,
 		basePath+apiDocsPath+swaggerConfigSuffix,
 		basePath+oauth2RedirectPath,
 		docURL,
 	)
-	router.GET(basePath+apiDocsPath+swaggerConfigSuffix, jsonContentType, []byte(configContent))
+	router.GET(apiDocsPath, jsonContentType, []byte(config.docJson))
+	router.GET(apiDocsPath+swaggerConfigSuffix, jsonContentType, []byte(configContent))
 
 	// 静态资产
 	for _, asset := range allAssets() {

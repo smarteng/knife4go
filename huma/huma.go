@@ -35,7 +35,9 @@ func (w *humaRouter) GET(path, contentType string, content []byte) {
 // InitSwaggerKnife 将 Knife4j UI、OpenAPI 文档端点与静态资产注册到 huma API。
 // 文档来源默认 swag.ReadDoc("swagger")，也可通过 knife.Doc(doc) 显式指定；
 // UI 页面路径默认 /doc.html，可用 knife.DocPath(path) 修改。
-// 传入 huma.NewGroup(api, prefix) 创建的组可整体加前缀。
+// 注意：传入 huma.NewGroup 创建的前缀组时，路由会被正确加前缀，但
+// swagger-config 中的 url 保持根级相对路径；带前缀部署建议改用根包
+// knife.InitSwaggerKnife（gin 入口）或根级 huma API。
 func InitSwaggerKnife(api huma.API, opts ...knife.Opts) error {
 	return knife.Register(&humaRouter{api: api}, opts...)
 }

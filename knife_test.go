@@ -103,3 +103,31 @@ func TestInitSwaggerKnifeFailsWithoutDocument(t *testing.T) {
 		t.Fatal("expected error when no document is available, got nil")
 	}
 }
+
+func TestInitSwaggerKnifeUnderPrefixGroup(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	group := router.Group("/dagine")
+	if err := InitSwaggerKnife(group, Doc(openAPI303Document)); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+
+	for _, path := range []string{
+		"/dagine/doc.html",
+		"/dagine/v3/api-docs",
+		"/dagine/v3/api-docs/swagger-config",
+		"/dagine/webjars/css/app.ac23e017.css",
+	} {
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != http.StatusOK {
+			t.Errorf("expected status 200 for %s, got %d", path, response.Code)
+		}
+	}
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/dagine/v3/api-docs/swagger-config", nil))
+	if !strings.Contains(response.Body.String(), `"url": "/dagine/v3/api-docs"`) {
+		t.Errorf("expected prefixed url in swagger-config, got %q", response.Body.String())
+	}
+}
