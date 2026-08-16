@@ -48,6 +48,22 @@ func TestRegisterRegistersDynamicRoutes(t *testing.T) {
 	}
 }
 
+func TestRegisterRegistersAllStaticAssets(t *testing.T) {
+	routes := fakeRouterRoutes(t)
+	// 期望路径以各资产文件 RELATIVE_PATH 常量为准（此处与常量一致）
+	for _, want := range []string{
+		"/webjars/css/app.ac23e017.css",
+		"/webjars/css/chunk-75464e7e.8fb93ba5.css",
+		"/webjars/css/chunk-d7d5f59c.a9ffbfcb.css",
+		"/webjars/css/chunk-vendors.f24a310a.css",
+		"/webjars/css/chunk-vendors.f24a310a.css.gz",
+	} {
+		if !containsRoute(routes, want) {
+			t.Errorf("expected asset route %q to be registered", want)
+		}
+	}
+}
+
 func TestRegisterBasePathAffectsDocumentURL(t *testing.T) {
 	router := &fakeRouter{}
 	if err := Register(router, Doc(openAPI303Document)); err != nil {

@@ -7,6 +7,7 @@ import (
 	"github.com/swaggo/swag"
 
 	"github.com/jasonlabz/knife4go/ui"
+	"github.com/jasonlabz/knife4go/ui/webjars/css"
 )
 
 // Router 是 knife4go 注册静态 GET 路由所需的最小框架无关接口。
@@ -72,7 +73,7 @@ func Register(router Router, opts ...Opts) error {
 	return nil
 }
 
-// allAssets 返回全部静态资产；由各资产子包任务逐步填充。
+// allAssets 返回全部静态资产。
 func allAssets() []ui.Asset {
-	return nil
+	return append([]ui.Asset{}, css.Assets...)
 }
