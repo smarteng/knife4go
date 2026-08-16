@@ -43,18 +43,23 @@ func InitApiRouter() *gin.Engine {
 
 ```go
 import (
+	"fmt"
+
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
-	knifehuma "github.com/jasonlabz/knife4go/huma"
+	knife "github.com/jasonlabz/knife4go"
 )
 
 func main() {
 	router := gin.Default()
 	api := humagin.New(router, huma.DefaultConfig("demo", "v1"))
-	if err := knifehuma.InitSwaggerKnife(api); err != nil {
-		panic(err)
+
+	openAPIDocument, err := api.OpenAPI().Downgrade()
+	if err != nil {
+		panic(fmt.Errorf("downgrade huma OpenAPI document: %w", err))
 	}
+	_ = knife.InitHumaKnife(api, knife.Doc(string(openAPIDocument)))
 	_ = router.Run(":8080")
 }
 ```
@@ -121,6 +126,10 @@ knife4go 的注册逻辑是框架无关的，接入新框架只需两步：
    ```
 
 2. 调用 `knife4go.Register(router, opts...)`，或参照 `huma/` 子包封装 `InitSwaggerKnife` 便捷入口。
+
+## 示例效果
+
+![img](./_examples/knife4go_example.png)
 
 ## Links
 

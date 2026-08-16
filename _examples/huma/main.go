@@ -2,15 +2,22 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
-	knifehuma "github.com/jasonlabz/knife4go/huma"
+	knife "github.com/jasonlabz/knife4go"
 )
 
 func main() {
 	router := gin.Default()
 	api := humagin.New(router, huma.DefaultConfig("demo", "v1"))
-	_ = knifehuma.InitSwaggerKnife(api)
+
+	openAPIDocument, err := api.OpenAPI().Downgrade()
+	if err != nil {
+		panic(fmt.Errorf("downgrade huma OpenAPI document: %w", err))
+	}
+	_ = knife.InitHumaKnife(api, knife.Doc(string(openAPIDocument)))
 	_ = router.Run(":8080")
 }
