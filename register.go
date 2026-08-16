@@ -32,8 +32,8 @@ const (
 	jsonContentType = "application/json;charset=UTF-8"
 )
 
-// Register 将 knife4go 的 UI 页面、OpenAPI 文档端点与全部静态资产注册到 router。
-func Register(router Router, opts ...Opts) error {
+// RegisterOpenAPI 将 knife4go 的 UI 页面、OpenAPI 文档端点与全部静态资产注册到 router。
+func RegisterOpenAPI(router Router, opts ...Opts) error {
 	config := Config{}
 	for _, opt := range opts {
 		opt(&config)
