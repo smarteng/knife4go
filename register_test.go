@@ -79,6 +79,18 @@ func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 		"/webjars/js/chunk-d7d5f59c.e61130f3.js.LICENSE.txt",
 		"/webjars/js/chunk-vendors.d51cf6f8.js",
 		"/webjars/js/chunk-vendors.d51cf6f8.js.LICENSE.txt",
+		"/webjars/fonts/fontawesome-webfont.706450d7.ttf",
+		"/webjars/fonts/fontawesome-webfont.97493d3f.woff2",
+		"/webjars/fonts/fontawesome-webfont.d9ee23d5.woff",
+		"/webjars/fonts/fontawesome-webfont.f7c2b4b7.eot",
+		"/webjars/fonts/iconfont.4ca3d0c0.ttf",
+		"/webjars/fonts/iconfont.e2d2b98e.eot",
+		"/webjars/img/editormd-logo.53ea80e2.svg",
+		"/webjars/img/fontawesome-webfont.29800836.svg",
+		"/webjars/img/iconfont.1d48c203.svg",
+		"/webjars/img/loading2x.695405a9.gif",
+		"/webjars/img/loading3x.65eacf61.gif",
+		"/webjars/img/loading.c929501e.gif",
 	} {
 		if !containsRoute(routes, want) {
 			t.Errorf("expected asset route %q to be registered", want)

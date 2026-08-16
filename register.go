@@ -8,6 +8,8 @@ import (
 
 	"github.com/jasonlabz/knife4go/ui"
 	"github.com/jasonlabz/knife4go/ui/webjars/css"
+	"github.com/jasonlabz/knife4go/ui/webjars/fonts"
+	"github.com/jasonlabz/knife4go/ui/webjars/img"
 	"github.com/jasonlabz/knife4go/ui/webjars/js"
 )
 
@@ -77,5 +79,7 @@ func Register(router Router, opts ...Opts) error {
 // allAssets 返回全部静态资产。
 func allAssets() []ui.Asset {
 	assets := append([]ui.Asset{}, css.Assets...)
-	return append(assets, js.Assets...)
+	assets = append(assets, js.Assets...)
+	assets = append(assets, fonts.Assets...)
+	return append(assets, img.Assets...)
 }
