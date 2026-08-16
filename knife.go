@@ -21,10 +21,10 @@ func InitSwaggerKnife(router gin.IRouter, opts ...Opts) error {
 // 文档来源默认 swag.ReadDoc("swagger")，也可通过 knife.Doc(doc) 显式指定；
 // UI 页面路径默认 /doc.html，可用 knife.DocPath(path) 修改。
 //
-// 注册位置需与文档 paths 的前缀互补：Knife4j 前端会基于 doc.html 所在路径
-// 拼接接口路径（huma.NewGroup 会把组前缀写入文档 paths）。因此 huma 文档
-// paths 带前缀时应注册在根级 API；仅当文档 paths 无前缀（如 swag 生成）时
-// 才适合注册在带前缀的组上。
+// 注册位置可自由选择：注册在 huma.NewGroup 前缀组上时，用 DocBasePath 声明
+// 组前缀，knife4go 会相应剥离文档 paths 中的该前缀（Knife4j 前端会基于
+// doc.html 所在路径自行拼接前缀，剥离后拼接结果恰好是原始路径）；注册在
+// 根级 API 时无需声明。
 func InitHumaKnife(api huma.API, opts ...Opts) error {
 	return RegisterOpenAPI(&_huma.Router{API: api}, opts...)
 }

@@ -17,3 +17,13 @@ func (w *Router) GET(path, contentType string, content []byte) {
 		c.Data(http.StatusOK, contentType, content)
 	})
 }
+
+// BasePath 返回 gin 路由组前缀，RegisterOpenAPI 据此判断文档 paths 是否
+// 已带注册位置前缀（gin.IRouter 接口未声明该方法，*Engine 与 *RouterGroup
+// 均有，用类型断言获取）。
+func (w *Router) BasePath() string {
+	if routerWithBasePath, ok := w.R.(interface{ BasePath() string }); ok {
+		return routerWithBasePath.BasePath()
+	}
+	return ""
+}

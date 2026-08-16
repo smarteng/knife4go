@@ -2,6 +2,7 @@ package knife
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -23,7 +24,7 @@ func (f *fakeRouter) GET(path, contentType string, content []byte) {
 func fakeRouterRoutes(t *testing.T, opts ...Opts) []fakeRoute {
 	t.Helper()
 	router := &fakeRouter{}
-	if err := Register(router, append([]Opts{Doc(openAPI303Document)}, opts...)...); err != nil {
+	if err := RegisterOpenAPI(router, append([]Opts{Doc(openAPI303Document)}, opts...)...); err != nil {
 		t.Fatalf("unexpected registration error: %v", err)
 	}
 	return router.routes
@@ -116,7 +117,7 @@ func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 
 func TestRegisterConfigContentUsesPrefixFreeURLs(t *testing.T) {
 	router := &fakeRouter{}
-	if err := Register(router, Doc(openAPI303Document)); err != nil {
+	if err := RegisterOpenAPI(router, Doc(openAPI303Document)); err != nil {
 		t.Fatalf("unexpected registration error: %v", err)
 	}
 	// Knife4j 前端会基于 doc.html 所在路径自行拼接前缀（a + url），
@@ -149,4 +150,69 @@ func routeContent(routes []fakeRoute, path string) []byte {
 		}
 	}
 	return nil
+}
+
+const prefixedOpenAPIDocument = `{"openapi":"3.0.3","info":{"title":"t","version":"1.0.0"},"paths":{"/catalog/health-check":{"get":{}},"/catalog/api/v1/users":{"get":{}}}}`
+
+func TestRegisterOpenAPIStripsDocumentBasePath(t *testing.T) {
+	router := &fakeRouter{}
+	if err := RegisterOpenAPI(router, Doc(prefixedOpenAPIDocument), DocBasePath("/catalog")); err != nil {
+		t.Fatalf("unexpected registration error: %v", err)
+	}
+	doc := routeContent(router.routes, "/v3/api-docs")
+	var root struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	if err := json.Unmarshal(doc, &root); err != nil {
+		t.Fatalf("unexpected document: %v", err)
+	}
+	for _, want := range []string{"/health-check", "/api/v1/users"} {
+		if _, ok := root.Paths[want]; !ok {
+			t.Errorf("expected path %q after stripping base path, got %v", want, keys(root.Paths))
+		}
+	}
+	for _, unwanted := range []string{"/catalog/health-check", "/catalog/api/v1/users"} {
+		if _, ok := root.Paths[unwanted]; ok {
+			t.Errorf("expected path %q to be stripped, got %v", unwanted, keys(root.Paths))
+		}
+	}
+}
+
+func TestRegisterOpenAPIKeepsDocumentWhenBasePathDoesNotMatch(t *testing.T) {
+	for _, testCase := range []struct {
+		name  string
+		doc   string
+		opts  []Opts
+		paths []string
+	}{
+		{name: "unprefixed document with base path option", doc: openAPI303Document, opts: []Opts{DocBasePath("/catalog")}, paths: []string{}},
+		{name: "prefixed document without base path option", doc: prefixedOpenAPIDocument, opts: nil, paths: []string{"/catalog/health-check"}},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			router := &fakeRouter{}
+			if err := RegisterOpenAPI(router, append([]Opts{Doc(testCase.doc)}, testCase.opts...)...); err != nil {
+				t.Fatalf("unexpected registration error: %v", err)
+			}
+			doc := routeContent(router.routes, "/v3/api-docs")
+			var root struct {
+				Paths map[string]json.RawMessage `json:"paths"`
+			}
+			if err := json.Unmarshal(doc, &root); err != nil {
+				t.Fatalf("unexpected document: %v", err)
+			}
+			for _, want := range testCase.paths {
+				if _, ok := root.Paths[want]; !ok {
+					t.Errorf("expected path %q preserved as-is, got %v", want, keys(root.Paths))
+				}
+			}
+		})
+	}
+}
+
+func keys(m map[string]json.RawMessage) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }

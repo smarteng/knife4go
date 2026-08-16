@@ -2,11 +2,13 @@ package knife
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/humatest"
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/swag"
@@ -183,5 +185,69 @@ func TestStaticRoutesAreHiddenFromOpenAPI(t *testing.T) {
 		if _, ok := paths[p]; ok {
 			t.Errorf("expected knife4go static route %q to be hidden from OpenAPI document", p)
 		}
+	}
+}
+
+const prefixedDoc = `{"openapi":"3.0.3","info":{"title":"t","version":"1.0.0"},"paths":{"/dagine/health-check":{"get":{}}}}`
+
+func TestInitSwaggerKnifeAutoStripsGroupPrefixFromDocument(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	group := router.Group("/dagine")
+	// huma 风格文档：paths 带组前缀；gin 适配器自动提供 BasePath，无需 DocBasePath
+	if err := InitSwaggerKnife(group, Doc(prefixedDoc)); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/dagine/v3/api-docs", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+	var root struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &root); err != nil {
+		t.Fatalf("unexpected document: %v", err)
+	}
+	if _, ok := root.Paths["/health-check"]; !ok {
+		t.Errorf("expected stripped path /health-check, got %v", root.Paths)
+	}
+	if _, ok := root.Paths["/dagine/health-check"]; ok {
+		t.Errorf("expected group prefix to be stripped, got %v", root.Paths)
+	}
+}
+
+func TestInitHumaKnifeWithPrefixGroupAndDocBasePath(t *testing.T) {
+	handler, api := humatest.New(t)
+	group := huma.NewGroup(api, "/generate-example-project")
+	// 注册在 huma 前缀组上，用 DocBasePath 声明组前缀
+	const prefixedHumaDoc = `{"openapi":"3.0.3","info":{"title":"t","version":"1.0.0"},"paths":{"/generate-example-project/health-check":{"get":{}}}}`
+	if err := InitHumaKnife(group, Doc(prefixedHumaDoc), DocBasePath("/generate-example-project")); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+
+	for _, path := range []string{
+		"/generate-example-project/doc.html",
+		"/generate-example-project/v3/api-docs",
+		"/generate-example-project/v3/api-docs/swagger-config",
+	} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != http.StatusOK {
+			t.Errorf("expected status 200 for %s, got %d", path, response.Code)
+		}
+	}
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/generate-example-project/v3/api-docs", nil))
+	var root struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &root); err != nil {
+		t.Fatalf("unexpected document: %v", err)
+	}
+	if _, ok := root.Paths["/health-check"]; !ok {
+		t.Errorf("expected stripped path /health-check, got %v", root.Paths)
 	}
 }

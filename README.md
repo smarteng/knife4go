@@ -61,12 +61,19 @@ func main() {
 
 最小可运行示例见 [`_examples/huma`](./_examples/huma)。
 
-**注册位置与文档前缀的搭配**：Knife4j 前端会基于 `doc.html` 所在路径拼接接口路径，因此注册位置需与文档 `paths` 的前缀互补：
+**注册位置自由选择**：Knife4j 前端会基于 `doc.html` 所在路径拼接接口路径，knife4go 自动适配注册位置：
 
-- 文档 `paths` **带前缀**（如 `huma.NewGroup` 会把组前缀写入文档）→ 注册在**根级**（上例即此用法）；
-- 文档 `paths` **无前缀**（如 swag 生成）→ 可注册在带前缀的路由组下（如上面 gin 示例）。
+- **gin 入口**：自动从路由组获取前缀；文档 `paths` 若全部带该前缀（如 huma 组生成的文档），注册前自动剥离，无需额外配置；
+- **huma 入口**：注册在 `huma.NewGroup` 前缀组上时，用 `DocBasePath(组前缀)` 声明前缀，knife4go 会相应剥离文档 `paths` 中的该前缀；注册在根级 API 时无需声明。
 
-两种搭配都会在页面得到带服务名前缀的完整接口路径；搭配错误会出现 `serviceName/serviceName/...` 双重前缀。
+```go
+// huma 前缀组注册（需声明组前缀）
+_ = knife4go.InitHumaKnife(serverAPI,
+	knife4go.Doc(docJSON),
+	knife4go.DocBasePath("/"+serviceName))
+```
+
+无论注册在何处，页面都会得到带单层服务名前缀的完整接口路径；无需声明前缀或前缀不匹配时文档原样注册。
 
 ## 文档来源
 
