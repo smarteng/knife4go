@@ -2,7 +2,6 @@ package knife
 
 import (
 	"bytes"
-	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -51,13 +50,38 @@ func TestRegisterRegistersDynamicRoutes(t *testing.T) {
 
 func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 	routes := fakeRouterRoutes(t)
-	// 期望路径以各资产文件 RELATIVE_PATH 常量为准（此处与常量一致）
 	for _, want := range []string{
+		"/favicon.ico",
+		"/img/icons/android-chrome-192x192.png",
+		"/img/icons/android-chrome-512x512.png",
+		"/img/icons/apple-touch-icon-120x120.png",
+		"/img/icons/apple-touch-icon-152x152.png",
+		"/img/icons/apple-touch-icon-180x180.png",
+		"/img/icons/apple-touch-icon-60x60.png",
+		"/img/icons/apple-touch-icon-76x76.png",
+		"/img/icons/apple-touch-icon.png",
+		"/img/icons/favicon-16x16.png",
+		"/img/icons/favicon-32x32.png",
+		"/img/icons/msapplication-icon-144x144.png",
+		"/img/icons/mstile-150x150.png",
+		"/img/icons/safari-pinned-tab.svg",
 		"/webjars/css/app.ac23e017.css",
 		"/webjars/css/chunk-75464e7e.8fb93ba5.css",
 		"/webjars/css/chunk-d7d5f59c.a9ffbfcb.css",
 		"/webjars/css/chunk-vendors.f24a310a.css",
 		"/webjars/css/chunk-vendors.f24a310a.css.gz",
+		"/webjars/fonts/fontawesome-webfont.706450d7.ttf",
+		"/webjars/fonts/fontawesome-webfont.97493d3f.woff2",
+		"/webjars/fonts/fontawesome-webfont.d9ee23d5.woff",
+		"/webjars/fonts/fontawesome-webfont.f7c2b4b7.eot",
+		"/webjars/fonts/iconfont.4ca3d0c0.ttf",
+		"/webjars/fonts/iconfont.e2d2b98e.eot",
+		"/webjars/img/editormd-logo.53ea80e2.svg",
+		"/webjars/img/fontawesome-webfont.29800836.svg",
+		"/webjars/img/iconfont.1d48c203.svg",
+		"/webjars/img/loading.c929501e.gif",
+		"/webjars/img/loading2x.695405a9.gif",
+		"/webjars/img/loading3x.65eacf61.gif",
 		"/webjars/js/app.2fab4ac5.js",
 		"/webjars/js/chunk-069eb437.2cfebf27.js",
 		"/webjars/js/chunk-069eb437.2cfebf27.js.LICENSE.txt",
@@ -80,34 +104,8 @@ func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 		"/webjars/js/chunk-d7d5f59c.e61130f3.js.LICENSE.txt",
 		"/webjars/js/chunk-vendors.d51cf6f8.js",
 		"/webjars/js/chunk-vendors.d51cf6f8.js.LICENSE.txt",
-		"/webjars/fonts/fontawesome-webfont.706450d7.ttf",
-		"/webjars/fonts/fontawesome-webfont.97493d3f.woff2",
-		"/webjars/fonts/fontawesome-webfont.d9ee23d5.woff",
-		"/webjars/fonts/fontawesome-webfont.f7c2b4b7.eot",
-		"/webjars/fonts/iconfont.4ca3d0c0.ttf",
-		"/webjars/fonts/iconfont.e2d2b98e.eot",
-		"/webjars/img/editormd-logo.53ea80e2.svg",
-		"/webjars/img/fontawesome-webfont.29800836.svg",
-		"/webjars/img/iconfont.1d48c203.svg",
-		"/webjars/img/loading2x.695405a9.gif",
-		"/webjars/img/loading3x.65eacf61.gif",
-		"/webjars/img/loading.c929501e.gif",
 		"/webjars/oauth/axios.min.js",
 		"/webjars/oauth/oauth2.html",
-		"/img/icons/android-chrome-192x192.png",
-		"/img/icons/android-chrome-512x512.png",
-		"/img/icons/apple-touch-icon-120x120.png",
-		"/img/icons/apple-touch-icon-152x152.png",
-		"/img/icons/apple-touch-icon-180x180.png",
-		"/img/icons/apple-touch-icon-60x60.png",
-		"/img/icons/apple-touch-icon-76x76.png",
-		"/img/icons/apple-touch-icon.png",
-		"/img/icons/favicon-16x16.png",
-		"/img/icons/favicon-32x32.png",
-		"/favicon.ico",
-		"/img/icons/msapplication-icon-144x144.png",
-		"/img/icons/mstile-150x150.png",
-		"/img/icons/safari-pinned-tab.svg",
 	} {
 		if !containsRoute(routes, want) {
 			t.Errorf("expected asset route %q to be registered", want)
@@ -150,69 +148,4 @@ func routeContent(routes []fakeRoute, path string) []byte {
 		}
 	}
 	return nil
-}
-
-const prefixedOpenAPIDocument = `{"openapi":"3.0.3","info":{"title":"t","version":"1.0.0"},"paths":{"/catalog/health-check":{"get":{}},"/catalog/api/v1/users":{"get":{}}}}`
-
-func TestRegisterOpenAPIStripsDocumentBasePath(t *testing.T) {
-	router := &fakeRouter{}
-	if err := RegisterOpenAPI(router, Doc(prefixedOpenAPIDocument), DocBasePath("/catalog")); err != nil {
-		t.Fatalf("unexpected registration error: %v", err)
-	}
-	doc := routeContent(router.routes, "/v3/api-docs")
-	var root struct {
-		Paths map[string]json.RawMessage `json:"paths"`
-	}
-	if err := json.Unmarshal(doc, &root); err != nil {
-		t.Fatalf("unexpected document: %v", err)
-	}
-	for _, want := range []string{"/health-check", "/api/v1/users"} {
-		if _, ok := root.Paths[want]; !ok {
-			t.Errorf("expected path %q after stripping base path, got %v", want, keys(root.Paths))
-		}
-	}
-	for _, unwanted := range []string{"/catalog/health-check", "/catalog/api/v1/users"} {
-		if _, ok := root.Paths[unwanted]; ok {
-			t.Errorf("expected path %q to be stripped, got %v", unwanted, keys(root.Paths))
-		}
-	}
-}
-
-func TestRegisterOpenAPIKeepsDocumentWhenBasePathDoesNotMatch(t *testing.T) {
-	for _, testCase := range []struct {
-		name  string
-		doc   string
-		opts  []Opts
-		paths []string
-	}{
-		{name: "unprefixed document with base path option", doc: openAPI303Document, opts: []Opts{DocBasePath("/catalog")}, paths: []string{}},
-		{name: "prefixed document without base path option", doc: prefixedOpenAPIDocument, opts: nil, paths: []string{"/catalog/health-check"}},
-	} {
-		t.Run(testCase.name, func(t *testing.T) {
-			router := &fakeRouter{}
-			if err := RegisterOpenAPI(router, append([]Opts{Doc(testCase.doc)}, testCase.opts...)...); err != nil {
-				t.Fatalf("unexpected registration error: %v", err)
-			}
-			doc := routeContent(router.routes, "/v3/api-docs")
-			var root struct {
-				Paths map[string]json.RawMessage `json:"paths"`
-			}
-			if err := json.Unmarshal(doc, &root); err != nil {
-				t.Fatalf("unexpected document: %v", err)
-			}
-			for _, want := range testCase.paths {
-				if _, ok := root.Paths[want]; !ok {
-					t.Errorf("expected path %q preserved as-is, got %v", want, keys(root.Paths))
-				}
-			}
-		})
-	}
-}
-
-func keys(m map[string]json.RawMessage) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	return out
 }

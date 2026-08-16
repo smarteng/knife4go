@@ -66,19 +66,16 @@ func main() {
 
 最小可运行示例见 [`_examples/huma`](./_examples/huma)。
 
-**注册位置自由选择**：Knife4j 前端会基于 `doc.html` 所在路径拼接接口路径，knife4go 自动适配注册位置：
+**前端适配说明**：内嵌 UI 资产保持与既有版本一致，仅在 `app.js` 上打字节级
+补丁：springdoc 分支
+尊重 `appendBasePath` 检测——文档 `paths` 已带注册前缀（huma 组场景）时不再拼接
+`doc.html` 位置前缀。
 
-- **gin 入口**：自动从路由组获取前缀；文档 `paths` 若全部带该前缀（如 huma 组生成的文档），注册前自动剥离，无需额外配置；
-- **huma 入口**：注册在 `huma.NewGroup` 前缀组上时，用 `DocBasePath(组前缀)` 声明前缀，knife4go 会相应剥离文档 `paths` 中的该前缀；注册在根级 API 时无需声明。
+**注册位置自由选择**：knife4j 前端检测文档 `paths` 是否已带注册位置前缀（`huma.NewGroup` 会把组前缀写入文档 `paths`），已带则不拼接 `doc.html` 位置前缀，未带则按原逻辑拼接。因此：
 
-```go
-// huma 前缀组注册（需声明组前缀）
-_ = knife4go.InitHumaKnife(serverAPI,
-	knife4go.Doc(docJSON),
-	knife4go.DocBasePath("/"+serviceName))
-```
-
-无论注册在何处，页面都会得到带单层服务名前缀的完整接口路径；无需声明前缀或前缀不匹配时文档原样注册。
+- **huma 前缀组注册**：文档 `paths` 自带组前缀（用 `serverAPI.OpenAPI()` 生成文档），前端不再拼接，展示与调试请求直接使用文档中的完整路径；
+- **gin 路由组注册**（swag 文档无前缀）：前端按原逻辑拼接 `doc.html` 位置前缀，行为与旧版一致；
+- 文档始终**原样注册**，不做任何改写，也无需声明前缀。
 
 ## 文档来源
 
