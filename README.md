@@ -59,7 +59,14 @@ func main() {
 }
 ```
 
-最小可运行示例见 [`_examples/huma`](./_examples/huma)。注册在根级 API 或 `huma.NewGroup` 前缀组上均可：Knife4j 前端会基于 `doc.html` 所在路径自动拼接前缀。
+最小可运行示例见 [`_examples/huma`](./_examples/huma)。
+
+**注册位置与文档前缀的搭配**：Knife4j 前端会基于 `doc.html` 所在路径拼接接口路径，因此注册位置需与文档 `paths` 的前缀互补：
+
+- 文档 `paths` **带前缀**（如 `huma.NewGroup` 会把组前缀写入文档）→ 注册在**根级**（上例即此用法）；
+- 文档 `paths` **无前缀**（如 swag 生成）→ 可注册在带前缀的路由组下（如上面 gin 示例）。
+
+两种搭配都会在页面得到带服务名前缀的完整接口路径；搭配错误会出现 `serviceName/serviceName/...` 双重前缀。
 
 ## 文档来源
 
