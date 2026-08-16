@@ -7,10 +7,12 @@ import (
 	"github.com/swaggo/swag"
 
 	"github.com/jasonlabz/knife4go/ui"
+	"github.com/jasonlabz/knife4go/ui/icons"
 	"github.com/jasonlabz/knife4go/ui/webjars/css"
 	"github.com/jasonlabz/knife4go/ui/webjars/fonts"
 	"github.com/jasonlabz/knife4go/ui/webjars/img"
 	"github.com/jasonlabz/knife4go/ui/webjars/js"
+	"github.com/jasonlabz/knife4go/ui/webjars/oauth"
 )
 
 // Router 是 knife4go 注册静态 GET 路由所需的最小框架无关接口。
@@ -81,5 +83,7 @@ func allAssets() []ui.Asset {
 	assets := append([]ui.Asset{}, css.Assets...)
 	assets = append(assets, js.Assets...)
 	assets = append(assets, fonts.Assets...)
-	return append(assets, img.Assets...)
+	assets = append(assets, img.Assets...)
+	assets = append(assets, oauth.Assets...)
+	return append(assets, icons.Assets...)
 }

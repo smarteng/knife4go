@@ -91,6 +91,22 @@ func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 		"/webjars/img/loading2x.695405a9.gif",
 		"/webjars/img/loading3x.65eacf61.gif",
 		"/webjars/img/loading.c929501e.gif",
+		"/webjars/oauth/axios.min.js",
+		"/webjars/oauth/oauth2.html",
+		"/img/icons/android-chrome-192x192.png",
+		"/img/icons/android-chrome-512x512.png",
+		"/img/icons/apple-touch-icon-120x120.png",
+		"/img/icons/apple-touch-icon-152x152.png",
+		"/img/icons/apple-touch-icon-180x180.png",
+		"/img/icons/apple-touch-icon-60x60.png",
+		"/img/icons/apple-touch-icon-76x76.png",
+		"/img/icons/apple-touch-icon.png",
+		"/img/icons/favicon-16x16.png",
+		"/img/icons/favicon-32x32.png",
+		"/favicon.ico",
+		"/img/icons/msapplication-icon-144x144.png",
+		"/img/icons/mstile-150x150.png",
+		"/img/icons/safari-pinned-tab.svg",
 	} {
 		if !containsRoute(routes, want) {
 			t.Errorf("expected asset route %q to be registered", want)
