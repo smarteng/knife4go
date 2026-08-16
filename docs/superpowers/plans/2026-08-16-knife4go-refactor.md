@@ -262,7 +262,7 @@ func InitSwaggerKnife(router gin.IRouter, opts ...Opts) error {
 
 - [ ] **Step 8: 删除旧核心文件与旧资产源**
 
-`internal/ui/knife` 下的旧资产文件仍 import 已删除的 `constant`/`utils`，必须整体移除（内容保留在 git 历史中，后续任务用 `git show HEAD~N:<path>` 取回转换）：
+`internal/ui/knife` 下的旧资产文件仍 import 已删除的 `constant`/`utils`，必须整体移除（内容保留在 git 历史中，后续任务用 `git show ca6aa81:<path>` 取回转换（ca6aa81 是重构前最后一个代码提交，固定引用不受后续提交影响））：
 
 ```bash
 cd /f/baidu/aiib-go/knife4go && git rm -q -r utils constant internal && rmdir utils constant internal 2>/dev/null; true
@@ -510,7 +510,7 @@ git add -A && git commit -m "feat: framework-agnostic core with gin adapter, res
 - [ ] **Step 1: 取回源文件并转换**
 
 ```bash
-cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/css && for f in APP_AC23E017_CSS CHUNK_75464E7E_8FB93BA5_CSS CHUNK_D7D5F59C_A9FFBFCB_CSS CHUNK_VENDORS_F24A310A_CSS CHUNK_VENDORS_F24A310A_CSS_GZ; do git show HEAD~1:internal/ui/knife/webjars/css/$f.go > ui/webjars/css/$f.go; done
+cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/css && for f in APP_AC23E017_CSS CHUNK_75464E7E_8FB93BA5_CSS CHUNK_D7D5F59C_A9FFBFCB_CSS CHUNK_VENDORS_F24A310A_CSS CHUNK_VENDORS_F24A310A_CSS_GZ; do git show ca6aa81:internal/ui/knife/webjars/css/$f.go > ui/webjars/css/$f.go; done
 ```
 
 对每个文件执行相同转换（以 APP_AC23E017_CSS.go 为例，内容常量 `APP_AC23E017_CSS_HEX_CONTENT` 原样保留）：
@@ -612,7 +612,7 @@ cd /f/baidu/aiib-go/knife4go && go build ./... && go test ./... && go vet ./... 
 - [ ] **Step 1: 取回源文件并转换**
 
 ```bash
-cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/js && for f in APP_2FAB4AC5_JS CHUNK_069EB437_2CFEBF27_JS CHUNK_069EB437_2CFEBF27_JS_LICENSE_TXT CHUNK_0D102D5A_B2BDDFFC_JS CHUNK_0FD67716_D57E2C41_JS CHUNK_260D712A_390177FE_JS CHUNK_260D712A_390177FE_JS_LICENSE_TXT CHUNK_2D0AF44E_392AFCD6_JS CHUNK_2D0BD799_EB48B7F1_JS CHUNK_2D0DA532_591AD7FC_JS CHUNK_3B888A65_8737CE4F_JS CHUNK_3EC4AAA8_A79D19F8_JS CHUNK_589FAEE0_5BFD1708_JS CHUNK_589FAEE0_5BFD1708_JS_LICENSE_TXT CHUNK_735C675C_5B409314_JS CHUNK_75464E7E_B130271B_JS CHUNK_ADB9E944_2C7F24FE_JS CHUNK_ADB9E944_2C7F24FE_JS_LICENSE_TXT CHUNK_D7D5F59C_E61130F3_JS CHUNK_D7D5F59C_E61130F3_JS_LICENSE_TXT CHUNK_VENDORS_D51CF6F8_JS CHUNK_VENDORS_D51CF6F8_JS_LICENSE_TXT; do git show HEAD~2:internal/ui/knife/webjars/js/$f.go > ui/webjars/js/$f.go; done
+cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/js && for f in APP_2FAB4AC5_JS CHUNK_069EB437_2CFEBF27_JS CHUNK_069EB437_2CFEBF27_JS_LICENSE_TXT CHUNK_0D102D5A_B2BDDFFC_JS CHUNK_0FD67716_D57E2C41_JS CHUNK_260D712A_390177FE_JS CHUNK_260D712A_390177FE_JS_LICENSE_TXT CHUNK_2D0AF44E_392AFCD6_JS CHUNK_2D0BD799_EB48B7F1_JS CHUNK_2D0DA532_591AD7FC_JS CHUNK_3B888A65_8737CE4F_JS CHUNK_3EC4AAA8_A79D19F8_JS CHUNK_589FAEE0_5BFD1708_JS CHUNK_589FAEE0_5BFD1708_JS_LICENSE_TXT CHUNK_735C675C_5B409314_JS CHUNK_75464E7E_B130271B_JS CHUNK_ADB9E944_2C7F24FE_JS CHUNK_ADB9E944_2C7F24FE_JS_LICENSE_TXT CHUNK_D7D5F59C_E61130F3_JS CHUNK_D7D5F59C_E61130F3_JS_LICENSE_TXT CHUNK_VENDORS_D51CF6F8_JS CHUNK_VENDORS_D51CF6F8_JS_LICENSE_TXT; do git show ca6aa81:internal/ui/knife/webjars/js/$f.go > ui/webjars/js/$f.go; done
 ```
 
 转换模式同 Task 2，差异：
@@ -713,7 +713,7 @@ cd /f/baidu/aiib-go/knife4go && go build ./... && go test ./... && go vet ./... 
 - [ ] **Step 1: 取回并转换 fonts**
 
 ```bash
-cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/fonts && for f in FONTAWESOME_WEBFONT_706450D7_TTF FONTAWESOME_WEBFONT_97493D3F_WOFF2 FONTAWESOME_WEBFONT_D9EE23D5_WOFF FONTAWESOME_WEBFONT_F7C2B4B7_EOT ICONFONT_4CA3D0C0_TTF ICONFONT_E2D2B98E_EOT; do git show HEAD~3:internal/ui/knife/webjars/fonts/$f.go > ui/webjars/fonts/$f.go; done
+cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/fonts && for f in FONTAWESOME_WEBFONT_706450D7_TTF FONTAWESOME_WEBFONT_97493D3F_WOFF2 FONTAWESOME_WEBFONT_D9EE23D5_WOFF FONTAWESOME_WEBFONT_F7C2B4B7_EOT ICONFONT_4CA3D0C0_TTF ICONFONT_E2D2B98E_EOT; do git show ca6aa81:internal/ui/knife/webjars/fonts/$f.go > ui/webjars/fonts/$f.go; done
 ```
 
 转换：内容 16 进制 → `ui.MustHex`；原调用 GetOther → `ContentType: ""`。资产变量名 `AddRouterOfFontawesomeWebfont706450d7Ttf` → `FontawesomeWebfont706450d7Ttf`，其余类推。
@@ -740,7 +740,7 @@ var Assets = []ui.Asset{
 - [ ] **Step 3: 取回并转换 img**
 
 ```bash
-cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/img && for f in EDITORMD_LOGO_53EA80E2_SVG FONTAWESOME_WEBFONT_29800836_SVG ICONFONT_1D48C203_SVG LOADING2X_695405A9_GIF LOADING3X_65EACF61_GIF LOADING_C929501E_GIF; do git show HEAD~3:internal/ui/knife/webjars/img/$f.go > ui/webjars/img/$f.go; done
+cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/img && for f in EDITORMD_LOGO_53EA80E2_SVG FONTAWESOME_WEBFONT_29800836_SVG ICONFONT_1D48C203_SVG LOADING2X_695405A9_GIF LOADING3X_65EACF61_GIF LOADING_C929501E_GIF; do git show ca6aa81:internal/ui/knife/webjars/img/$f.go > ui/webjars/img/$f.go; done
 ```
 
 转换同 fonts：`ui.MustHex`、`ContentType: ""`。
@@ -823,7 +823,7 @@ cd /f/baidu/aiib-go/knife4go && go build ./... && go test ./... && go vet ./... 
 - [ ] **Step 1: 取回并转换 oauth**
 
 ```bash
-cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/oauth && for f in AXIOS_MIN_JS OAUTH2_HTML; do git show HEAD~4:internal/ui/knife/webjars/oauth/$f.go > ui/webjars/oauth/$f.go; done
+cd /f/baidu/aiib-go/knife4go && mkdir -p ui/webjars/oauth && for f in AXIOS_MIN_JS OAUTH2_HTML; do git show ca6aa81:internal/ui/knife/webjars/oauth/$f.go > ui/webjars/oauth/$f.go; done
 ```
 
 转换：`AXIOS_MIN_JS.go` 内容 16 进制 → `ui.MustHex`，原调用 GetJs → `ContentType: "application/javascript;charset=UTF-8"`；`OAUTH2_HTML.go` 内容原文 → `[]byte(...)`，原调用 GetHtml → `ContentType: "text/html;charset=UTF-8"`。
@@ -846,7 +846,7 @@ var Assets = []ui.Asset{
 - [ ] **Step 3: 取回并转换 icons**
 
 ```bash
-cd /f/baidu/aiib-go/knife4go && mkdir -p ui/icons && for f in ANDROID_CHROME_192X192_PNG ANDROID_CHROME_512X512_PNG APPLE_TOUCH_ICON_120X120_PNG APPLE_TOUCH_ICON_152X152_PNG APPLE_TOUCH_ICON_180X180_PNG APPLE_TOUCH_ICON_60X60_PNG APPLE_TOUCH_ICON_76X76_PNG APPLE_TOUCH_ICON_PNG FAVICON_16X16_PNG FAVICON_32X32_PNG FAVICON_ICO MSAPPLICATION_ICON_144X144_PNG MSTILE_150X150_PNG SAFARI_PINNED_TAB_SVG; do git show HEAD~4:internal/ui/knife/img/icons/$f.go > ui/icons/$f.go; done
+cd /f/baidu/aiib-go/knife4go && mkdir -p ui/icons && for f in ANDROID_CHROME_192X192_PNG ANDROID_CHROME_512X512_PNG APPLE_TOUCH_ICON_120X120_PNG APPLE_TOUCH_ICON_152X152_PNG APPLE_TOUCH_ICON_180X180_PNG APPLE_TOUCH_ICON_60X60_PNG APPLE_TOUCH_ICON_76X76_PNG APPLE_TOUCH_ICON_PNG FAVICON_16X16_PNG FAVICON_32X32_PNG FAVICON_ICO MSAPPLICATION_ICON_144X144_PNG MSTILE_150X150_PNG SAFARI_PINNED_TAB_SVG; do git show ca6aa81:internal/ui/knife/img/icons/$f.go > ui/icons/$f.go; done
 ```
 
 转换同 fonts：`ui.MustHex`、`ContentType: ""`（原调用 GetOther）。注意路径形如 `/favicon.ico`（在站点根，无 `webjars` 前缀，以各文件 RELATIVE_PATH 常量为准）。
@@ -1061,8 +1061,10 @@ func TestStaticRoutesAreHiddenFromOpenAPI(t *testing.T) {
 
 - [ ] **Step 3: 验证与提交**
 
+Task 1 的 `go mod tidy` 会因 huma 尚未被引用而移除该依赖；本任务先 `go mod tidy` 重新解析（会重新加入 huma 与传递依赖），再构建测试：
+
 ```bash
-cd /f/baidu/aiib-go/knife4go && go build ./... && go test ./... && go vet ./... && gofmt -l . && git add -A && git commit -m "feat: huma adapter"
+cd /f/baidu/aiib-go/knife4go && go mod tidy && go build ./... && go test ./... && go vet ./... && gofmt -l . && git add -A && git commit -m "feat: huma adapter"
 ```
 
 ---
