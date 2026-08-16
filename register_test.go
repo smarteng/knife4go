@@ -114,40 +114,22 @@ func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 	}
 }
 
-func TestRegisterBasePathAffectsDocumentURL(t *testing.T) {
+func TestRegisterConfigContentUsesPrefixFreeURLs(t *testing.T) {
 	router := &fakeRouter{}
 	if err := Register(router, Doc(openAPI303Document)); err != nil {
 		t.Fatalf("unexpected registration error: %v", err)
 	}
-	// fakeRouter 未实现 BasePath，documentURL 保持根路径
-	if got := routeContent(router.routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/v3/api-docs"`) {
-		t.Errorf("expected root document URL, got %q", got)
-	}
-}
-
-type prefixedFakeRouter struct {
-	fakeRouter
-	basePath string
-}
-
-func (p *prefixedFakeRouter) BasePath() string { return p.basePath }
-
-func TestRegisterHonorsRouterBasePath(t *testing.T) {
-	router := &prefixedFakeRouter{basePath: "/catalog"}
-	if err := Register(router, Doc(openAPI303Document)); err != nil {
-		t.Fatalf("unexpected registration error: %v", err)
-	}
-	// 注册路径保持相对（框架负责拼接前缀），basePath 只进入 swagger-config 内容
-	for _, want := range []string{"/v3/api-docs", "/v3/api-docs/swagger-config"} {
-		if !containsRoute(router.routes, want) {
-			t.Errorf("expected relative route %q to be registered", want)
+	// Knife4j 前端会基于 doc.html 所在路径自行拼接前缀（a + url），
+	// 因此 config 内容必须是无前缀相对路径。
+	config := string(routeContent(router.routes, "/v3/api-docs/swagger-config"))
+	for _, want := range []string{
+		`"configUrl": "/v3/api-docs/swagger-config"`,
+		`"oauth2RedirectUrl": "/swagger-ui/oauth2-redirect.html"`,
+		`"url": "/v3/api-docs"`,
+	} {
+		if !strings.Contains(config, want) {
+			t.Errorf("expected config to contain %s, got %q", want, config)
 		}
-	}
-	if got := routeContent(router.routes, "/v3/api-docs"); string(got) != openAPI303Document {
-		t.Errorf("expected document route to serve the OpenAPI document, got %q", got)
-	}
-	if got := routeContent(router.routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/catalog/v3/api-docs"`) {
-		t.Errorf("expected prefixed document URL in config, got %q", got)
 	}
 }
 

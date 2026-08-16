@@ -125,9 +125,15 @@ func TestInitSwaggerKnifeUnderPrefixGroup(t *testing.T) {
 		}
 	}
 
+	// Knife4j 前端（knife4j-vue）会基于 doc.html 所在路径推导前缀并自行拼接
+	// （a + url），因此 swagger-config 中的 url/configUrl 必须是无前缀相对路径。
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/dagine/v3/api-docs/swagger-config", nil))
-	if !strings.Contains(response.Body.String(), `"url": "/dagine/v3/api-docs"`) {
-		t.Errorf("expected prefixed url in swagger-config, got %q", response.Body.String())
+	configBody := response.Body.String()
+	if !strings.Contains(configBody, `"url": "/v3/api-docs"`) {
+		t.Errorf("expected prefix-free url in swagger-config, got %q", configBody)
+	}
+	if strings.Contains(configBody, `"url": "/dagine`) {
+		t.Errorf("expected no service prefix in swagger-config url, got %q", configBody)
 	}
 }

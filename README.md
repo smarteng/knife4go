@@ -59,7 +59,7 @@ func main() {
 }
 ```
 
-最小可运行示例见 [`_examples/huma`](./_examples/huma)。传入 `huma.NewGroup` 创建的组时路由可整体加前缀，但 swagger-config 中的 url 保持根级相对路径；带前缀部署建议改用 gin 入口或根级 huma API。
+最小可运行示例见 [`_examples/huma`](./_examples/huma)。注册在根级 API 或 `huma.NewGroup` 前缀组上均可：Knife4j 前端会基于 `doc.html` 所在路径自动拼接前缀。
 
 ## 文档来源
 

@@ -2,7 +2,6 @@ package knife
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/swaggo/swag"
 
@@ -47,12 +46,6 @@ func Register(router Router, opts ...Opts) error {
 		config.docJson = doc
 	}
 
-	docURL := apiDocsPath
-	if routerWithBasePath, ok := router.(interface{ BasePath() string }); ok {
-		docURL = strings.TrimSuffix(routerWithBasePath.BasePath(), "/") + apiDocsPath
-	}
-	basePath := strings.TrimSuffix(docURL, apiDocsPath)
-
 	// UI 页面（路径可经 DocPath 定制）
 	docPath := config.docPath
 	if docPath == "" {
@@ -60,12 +53,13 @@ func Register(router Router, opts ...Opts) error {
 	}
 	router.GET(docPath, ui.DocHtml.ContentType, ui.DocHtml.Content)
 
-	// OpenAPI 文档端点与 UI 配置端点均以相对路径注册，由适配器/框架拼接自身前缀；
-	// basePath 只进入 swagger-config 内容，保证前端拿到的 url 是完整地址。
+	// OpenAPI 文档端点与 UI 配置端点均以相对路径注册，由适配器/框架拼接自身前缀。
+	// swagger-config 内的 url/configUrl/oauth2RedirectUrl 必须是无前缀相对路径：
+	// Knife4j 前端（knife4j-vue）会基于 doc.html 所在路径推导前缀并自行拼接（a + url）。
 	configContent := fmt.Sprintf(`{"configUrl": %q,"oauth2RedirectUrl": %q,"url": %q,"validatorUrl": ""}`,
-		basePath+apiDocsPath+swaggerConfigSuffix,
-		basePath+oauth2RedirectPath,
-		docURL,
+		apiDocsPath+swaggerConfigSuffix,
+		oauth2RedirectPath,
+		apiDocsPath,
 	)
 	router.GET(apiDocsPath, jsonContentType, []byte(config.docJson))
 	router.GET(apiDocsPath+swaggerConfigSuffix, jsonContentType, []byte(configContent))
