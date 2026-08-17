@@ -113,6 +113,13 @@ func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 	}
 }
 
+func TestRegisterFailsWithoutDocument(t *testing.T) {
+	router := &fakeRouter{}
+	if err := RegisterOpenAPI(router); err == nil {
+		t.Fatal("expected error when no document is provided, got nil")
+	}
+}
+
 func TestRegisterConfigContentUsesPrefixFreeURLs(t *testing.T) {
 	router := &fakeRouter{}
 	if err := RegisterOpenAPI(router, Doc(openAPI303Document)); err != nil {

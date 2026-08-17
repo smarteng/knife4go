@@ -3,8 +3,6 @@ package knife
 import (
 	"fmt"
 
-	"github.com/swaggo/swag"
-
 	"github.com/jasonlabz/knife4go/ui"
 	"github.com/jasonlabz/knife4go/ui/icons"
 	"github.com/jasonlabz/knife4go/ui/webjars/css"
@@ -34,19 +32,16 @@ const (
 )
 
 // RegisterOpenAPI 将 knife4go 的 UI 页面、OpenAPI 文档端点与全部静态资产注册到 router。
-// 文档内容始终原样注册，不做任何改写；前端按文档 paths 是否已带注册位置前缀
-// 自行决定是否拼接 doc.html 位置前缀（huma 组前缀写入 paths 时不再拼接）。
+// 文档必须经 Doc() 提供，否则返回错误；文档内容始终原样注册，不做任何改写。
+// 前端按文档 paths 是否已带注册位置前缀自行决定是否拼接 doc.html 位置前缀
+// （huma 组前缀写入 paths 时不再拼接）。
 func RegisterOpenAPI(router Router, opts ...Opts) error {
 	config := Config{}
 	for _, opt := range opts {
 		opt(&config)
 	}
 	if config.docJson == "" {
-		doc, err := swag.ReadDoc("swagger")
-		if err != nil {
-			return fmt.Errorf("read OpenAPI document from swag: %w", err)
-		}
-		config.docJson = doc
+		return fmt.Errorf("no OpenAPI document provided: use knife.Doc(doc) to supply the OpenAPI 3.0 JSON")
 	}
 
 	// UI 页面（路径可经 DocPath 定制）

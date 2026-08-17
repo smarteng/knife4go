@@ -9,8 +9,8 @@ type Config struct {
 // Opts 以函数选项模式配置 knife4go 注册行为。
 type Opts func(*Config)
 
-// Doc 指定 OpenAPI 文档内容（JSON 字符串）。
-// 未指定时默认读取 swag.ReadDoc("swagger")，需要空白导入 _ "项目/docs/swagger"。
+// Doc 指定 OpenAPI 文档内容（OpenAPI 3.0 JSON 字符串）。
+// knife4go 不读取任何文档生成器，注册时必须通过 Doc 传入文档。
 func Doc(doc string) Opts {
 	return func(c *Config) {
 		c.docJson = doc

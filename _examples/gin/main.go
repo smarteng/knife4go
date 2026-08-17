@@ -6,13 +6,15 @@ import (
 	knife4go "github.com/jasonlabz/knife4go"
 )
 
+// openAPI303Document 是最小 OpenAPI 3.0 文档示例。
+// 实际项目可从 swag 等生成器读取后经 knife4go.Doc 传入。
+const openAPI303Document = `{"openapi":"3.0.3","info":{"title":"demo","version":"v1"},"paths":{}}`
+
 // InitApiRouter 返回带 knife4go UI 的路由。
-// 文档默认来自 swag.ReadDoc("swagger")（需空白导入 _ "项目/docs/swagger"），
-// 也可用 knife4go.Doc(doc) 显式指定。
 func InitApiRouter() *gin.Engine {
 	router := gin.Default()
 	serverGroup := router.Group("/demo")
-	_ = knife4go.InitSwaggerKnife(serverGroup)
+	_ = knife4go.InitSwaggerKnife(serverGroup, knife4go.Doc(openAPI303Document))
 	return router
 }
 

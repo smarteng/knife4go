@@ -10,14 +10,9 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/humatest"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag"
 )
 
 const openAPI303Document = `{"openapi":"3.0.3","info":{"title":"test","version":"1.0.0"},"paths":{}}`
-
-type fakeSwagger struct{ doc string }
-
-func (f fakeSwagger) ReadDoc() string { return f.doc }
 
 func TestInitSwaggerKnifeRegistersUIAndDocument(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -51,26 +46,6 @@ func TestInitSwaggerKnifeRegistersUIAndDocument(t *testing.T) {
 	}
 }
 
-func TestInitSwaggerKnifeReadsDocFromSwagByDefault(t *testing.T) {
-	if swag.GetSwagger(swag.Name) == nil {
-		swag.Register(swag.Name, fakeSwagger{doc: openAPI303Document})
-	}
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	if err := InitSwaggerKnife(router); err != nil {
-		t.Fatalf("unexpected initialization error: %v", err)
-	}
-
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v3/api-docs", nil))
-	if response.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d", response.Code)
-	}
-	if !bytes.Equal(response.Body.Bytes(), []byte(openAPI303Document)) {
-		t.Fatalf("expected default OpenAPI document %q, got %q", openAPI303Document, response.Body.Bytes())
-	}
-}
-
 func TestInitSwaggerKnifeCustomDocPath(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -92,17 +67,6 @@ func TestInitSwaggerKnifeCustomDocPath(t *testing.T) {
 				t.Fatalf("expected status %d, got %d", testCase.wantStatus, response.Code)
 			}
 		})
-	}
-}
-
-func TestInitSwaggerKnifeFailsWithoutDocument(t *testing.T) {
-	if swag.GetSwagger(swag.Name) != nil {
-		t.Skip("swagger document already registered by another test in this package")
-	}
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	if err := InitSwaggerKnife(router); err == nil {
-		t.Fatal("expected error when no document is available, got nil")
 	}
 }
 
