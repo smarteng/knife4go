@@ -32,15 +32,15 @@ func fakeRouterRoutes(t *testing.T, opts ...Opts) []fakeRoute {
 func TestRegisterRegistersDynamicRoutes(t *testing.T) {
 	routes := fakeRouterRoutes(t)
 
-	for _, want := range []string{"/doc.html", "/v3/api-docs", "/v3/api-docs/swagger-config"} {
+	for _, want := range []string{"/doc.html", "/swagger/doc.json", "/v3/api-docs/swagger-config"} {
 		if !containsRoute(routes, want) {
 			t.Errorf("expected route %q to be registered", want)
 		}
 	}
-	if got := routeContent(routes, "/v3/api-docs"); string(got) != openAPI303Document {
-		t.Errorf("expected /v3/api-docs to serve the OpenAPI document, got %q", got)
+	if got := routeContent(routes, "/swagger/doc.json"); string(got) != openAPI303Document {
+		t.Errorf("expected /swagger/doc.json to serve the OpenAPI document, got %q", got)
 	}
-	if got := routeContent(routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/v3/api-docs"`) {
+	if got := routeContent(routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/swagger/doc.json"`) {
 		t.Errorf("expected swagger-config to contain the document URL, got %q", got)
 	}
 	if got := routeContent(routes, "/doc.html"); !bytes.Contains(got, []byte("knife4j-vue")) {
@@ -117,7 +117,7 @@ func TestRegisterConfigContentUsesPrefixFreeURLs(t *testing.T) {
 	for _, want := range []string{
 		`"configUrl": "/v3/api-docs/swagger-config"`,
 		`"oauth2RedirectUrl": "/swagger-ui/oauth2-redirect.html"`,
-		`"url": "/v3/api-docs"`,
+		`"url": "/swagger/doc.json"`,
 	} {
 		if !strings.Contains(config, want) {
 			t.Errorf("expected config to contain %s, got %q", want, config)

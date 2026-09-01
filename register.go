@@ -15,8 +15,10 @@ type Router interface {
 }
 
 const (
-	// apiDocsPath 是 OpenAPI 文档的相对路径。
-	apiDocsPath   = "/swagger/doc.json"
+	// defaultAPIDocsPath 是 OpenAPI 文档 JSON 端点的默认路径，可经 APIDocsPath 定制。
+	defaultAPIDocsPath = "/swagger/doc.json"
+	// apiDocsPrefix 是 UI 能力配置（swagger-config）端点的固定前缀。
+	// 该前缀由 Knife4j 前端约定，独立于文档 JSON 端点，不随 APIDocsPath 变化。
 	apiDocsPrefix = "/v3/api-docs"
 	// swaggerConfigSuffix 是 UI 配置端点的相对路径后缀。
 	swaggerConfigSuffix = "/swagger-config"
@@ -46,13 +48,19 @@ func RegisterOpenAPI(router Router, opts ...Opts) error {
 	}
 	router.GET(docPath, ui.DocHtml.ContentType, ui.DocHtml.Content)
 
+	// OpenAPI 文档端点路径（可经 APIDocsPath 定制）
+	apiDocsPath := config.apiDocsPath
+	if apiDocsPath == "" {
+		apiDocsPath = defaultAPIDocsPath
+	}
+
 	// OpenAPI 文档端点与 UI 配置端点均以相对路径注册，由适配器/框架拼接自身前缀。
 	// swagger-config 内的 url/configUrl/oauth2RedirectUrl 必须是无前缀相对路径：
 	// Knife4j 前端（knife4j-vue）会基于 doc.html 所在路径推导前缀并自行拼接（a + url）。
 	configContent := fmt.Sprintf(`{"configUrl": %q,"oauth2RedirectUrl": %q,"url": %q,"validatorUrl": ""}`,
 		apiDocsPrefix+swaggerConfigSuffix,
 		oauth2RedirectPath,
-		apiDocsPrefix,
+		apiDocsPath,
 	)
 	router.GET(apiDocsPath, jsonContentType, []byte(config.docJson))
 	router.GET(apiDocsPrefix+swaggerConfigSuffix, jsonContentType, []byte(configContent))

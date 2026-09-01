@@ -2,9 +2,10 @@ package knife
 
 // Config 是 InitSwaggerKnife / InitHumaKnife / RegisterOpenAPI 的注册配置。
 type Config struct {
-	docJson string
-	docPath string
-	verbose bool
+	docJson     string
+	docPath     string
+	apiDocsPath string
+	verbose     bool
 }
 
 // Opts 以函数选项模式配置 knife4go 注册行为。
@@ -22,6 +23,16 @@ func Doc(doc string) Opts {
 func DocPath(path string) Opts {
 	return func(c *Config) {
 		c.docPath = path
+	}
+}
+
+// APIDocsPath 指定 OpenAPI 文档 JSON 端点路径，默认 /swagger/doc.json。
+//
+// 该路径同时会写入 swagger-config 响应体的 url 字段，供 Knife4j 前端加载文档。
+// 传入空串等价于不设置（使用默认值）。示例：APIDocsPath("/api/openapi.json")。
+func APIDocsPath(path string) Opts {
+	return func(c *Config) {
+		c.apiDocsPath = path
 	}
 }
 

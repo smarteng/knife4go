@@ -26,9 +26,9 @@ func TestInitSwaggerKnifeRegistersUIAndDocument(t *testing.T) {
 		wantDocument []byte
 		bodySnippet  string
 	}{
-		{path: "/v3/api-docs", wantDocument: []byte(openAPI303Document)},
+		{path: "/swagger/doc.json", wantDocument: []byte(openAPI303Document)},
 		{path: "/doc.html", bodySnippet: "knife4j-vue"},
-		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/v3/api-docs"`},
+		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/swagger/doc.json"`},
 	} {
 		t.Run(testCase.path, func(t *testing.T) {
 			response := httptest.NewRecorder()
@@ -70,6 +70,48 @@ func TestInitSwaggerKnifeCustomDocPath(t *testing.T) {
 	}
 }
 
+// TestInitSwaggerKnifeCustomAPIDocsPath 校验 APIDocsPath 选项能同时改动
+// 文档 JSON 端点自身路径以及 swagger-config 响应体里的 url 字段。
+func TestInitSwaggerKnifeCustomAPIDocsPath(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	const customPath = "/api/openapi.json"
+	if err := InitSwaggerKnife(router,
+		Doc(openAPI303Document),
+		APIDocsPath(customPath),
+	); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+
+	// 自定义路径提供文档 JSON
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, customPath, nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected 200 on custom API docs path, got %d", response.Code)
+	}
+	if !bytes.Equal(response.Body.Bytes(), []byte(openAPI303Document)) {
+		t.Fatalf("expected exact OpenAPI document at custom path, got %q", response.Body.Bytes())
+	}
+
+	// 默认路径不再注册
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/swagger/doc.json", nil))
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 on default API docs path when overridden, got %d", response.Code)
+	}
+
+	// swagger-config 端点路径保持不变，但内部 url 指向自定义路径
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v3/api-docs/swagger-config", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected 200 on swagger-config endpoint, got %d", response.Code)
+	}
+	wantURL := `"url": "` + customPath + `"`
+	if !strings.Contains(response.Body.String(), wantURL) {
+		t.Errorf("expected swagger-config to reference custom API docs path %s, got %q", wantURL, response.Body.String())
+	}
+}
+
 func TestInitSwaggerKnifeUnderPrefixGroup(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -80,7 +122,7 @@ func TestInitSwaggerKnifeUnderPrefixGroup(t *testing.T) {
 
 	for _, path := range []string{
 		"/dagine/doc.html",
-		"/dagine/v3/api-docs",
+		"/dagine/swagger/doc.json",
 		"/dagine/v3/api-docs/swagger-config",
 		"/dagine/webjars/css/app.ac23e017.css",
 	} {
@@ -96,7 +138,7 @@ func TestInitSwaggerKnifeUnderPrefixGroup(t *testing.T) {
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/dagine/v3/api-docs/swagger-config", nil))
 	configBody := response.Body.String()
-	if !strings.Contains(configBody, `"url": "/v3/api-docs"`) {
+	if !strings.Contains(configBody, `"url": "/swagger/doc.json"`) {
 		t.Errorf("expected prefix-free url in swagger-config, got %q", configBody)
 	}
 	if strings.Contains(configBody, `"url": "/dagine`) {
@@ -115,9 +157,9 @@ func TestInitHumaKnifeRegistersUIAndDocument(t *testing.T) {
 		wantContent []byte
 		bodySnippet string
 	}{
-		{path: "/v3/api-docs", wantContent: []byte(openAPI303Document)},
+		{path: "/swagger/doc.json", wantContent: []byte(openAPI303Document)},
 		{path: "/doc.html", bodySnippet: "knife4j-vue"},
-		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/v3/api-docs"`},
+		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/swagger/doc.json"`},
 		{path: "/webjars/css/app.ac23e017.css", bodySnippet: "@charset"},
 		{path: "/webjars/js/app.2fab4ac5.js", bodySnippet: ""},
 	} {
@@ -143,7 +185,7 @@ func TestStaticRoutesAreHiddenFromOpenAPI(t *testing.T) {
 		t.Fatalf("unexpected initialization error: %v", err)
 	}
 	paths := api.OpenAPI().Paths
-	for _, p := range []string{"/doc.html", "/v3/api-docs", "/webjars/css/app.ac23e017.css"} {
+	for _, p := range []string{"/doc.html", "/swagger/doc.json", "/webjars/css/app.ac23e017.css"} {
 		if _, ok := paths[p]; ok {
 			t.Errorf("expected knife4go static route %q to be hidden from OpenAPI document", p)
 		}
@@ -169,7 +211,7 @@ func TestInitHumaKnifeWithPrefixGroupUsesDocumentUI(t *testing.T) {
 
 	// 文档原样注册（不剥离前缀、不改写 paths）
 	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/generate-example-project/v3/api-docs", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/generate-example-project/swagger/doc.json", nil))
 	if !strings.Contains(response.Body.String(), "/generate-example-project/health-check") {
 		t.Errorf("expected document paths untouched, got %q", response.Body.String())
 	}
