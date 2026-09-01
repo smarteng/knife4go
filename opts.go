@@ -6,6 +6,11 @@ type Config struct {
 	docPath     string
 	apiDocsPath string
 	verbose     bool
+
+	// beforeStaticAssets 是可选的钩子，在批量注册 40 条静态资源前调用；
+	// 返回一个用于收尾的清理函数（如恢复现场），在批量注册完成后立即执行。
+	// 默认为 nil，此时不做任何包裹。适配器（如 gin）可通过此钩子实现日志静默等横切能力。
+	beforeStaticAssets func() (cleanup func())
 }
 
 // Opts 以函数选项模式配置 knife4go 注册行为。

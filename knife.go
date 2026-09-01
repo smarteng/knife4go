@@ -17,23 +17,24 @@ import (
 // UI 页面路径默认 /doc.html，可用 DocPath(path) 修改。
 // 注册位置（根级或路由组）不影响展示：前端按文档 paths 是否已带前缀自适应。
 //
-// 默认会临时抑制 gin 的 [GIN-debug] 路由日志，避免约 40 条 knife4j 静态资源
-// 把用户业务路由的日志淹没；可通过 Verbose(true) 关闭该抑制。
+// 默认会临时抑制 gin 的 [GIN-debug] 路由日志，但仅覆盖 40 条固定的 knife4j 静态资源
+// 以及 knife4j 前端约定的 /v3/api-docs/swagger-config 探测端点；doc.html 与
+// apiDocsPath 两条用户可定制的动态路由的日志始终保留，方便用户确认文档端点被
+// 注册在哪个位置。可通过 Verbose(true) 关闭该抑制。
 func InitSwaggerKnife(router gin.IRouter, opts ...Opts) error {
-	cfg := Config{}
-	for _, opt := range opts {
-		opt(&cfg)
+	// 追加一个内部 Opts：仅在 gin.DebugMode 且未启用 Verbose 时，注入静态资源静默钩子。
+	// 外部 opts 里 Verbose 的最终生效值由函数选项累积决定，此处再次读取 cfg 以拿到最终值。
+	silencer := func(c *Config) {
+		if c.verbose || !gin.IsDebugging() {
+			return
+		}
+		c.beforeStaticAssets = withSilencedGinDebugOutput
 	}
-
-	if !cfg.verbose && gin.IsDebugging() {
-		defer withSilencedGinDebugOutput()()
-	}
-
-	return RegisterOpenAPI(&_gin.Router{R: router}, opts...)
+	return RegisterOpenAPI(&_gin.Router{R: router}, append(opts, silencer)...)
 }
 
 // withSilencedGinDebugOutput 临时把 gin.DefaultWriter 重定向到 io.Discard，
-// 返回一个用于恢复原 Writer 的函数；用法：defer withSilencedGinDebugOutput()()。
+// 返回一个用于恢复原 Writer 的清理函数；仅用于批量注册静态资源的场景。
 // 注意：非线程安全，仅用于服务启动阶段的路由注册（本身就应在单线程中完成）。
 func withSilencedGinDebugOutput() func() {
 	original := gin.DefaultWriter

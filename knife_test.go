@@ -112,6 +112,72 @@ func TestInitSwaggerKnifeCustomAPIDocsPath(t *testing.T) {
 	}
 }
 
+// TestInitSwaggerKnifeDocPathAutoPropagatesPrefix 覆盖用户把 UI 页面挂到子目录
+// （典型：DocPath("/swagger/index.html")）时，knife4go 自动把 uiPrefix 应用到
+// 静态资产、swagger-config、oauth2-redirect 与 API 文档端点。
+func TestInitSwaggerKnifeDocPathAutoPropagatesPrefix(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	if err := InitSwaggerKnife(router,
+		Doc(openAPI303Document),
+		DocPath("/swagger/index.html"),
+		APIDocsPath("/swagger/doc.json"),
+	); err != nil {
+		t.Fatalf("unexpected initialization error: %v", err)
+	}
+
+	// 全部 knife4go 相关路由都必须能命中（uiPrefix = /swagger）。
+	for _, tc := range []struct {
+		path        string
+		bodySnippet string
+	}{
+		{path: "/swagger/index.html", bodySnippet: "knife4j-vue"},
+		{path: "/swagger/doc.json", bodySnippet: `"openapi":"3.0.3"`},
+		{path: "/swagger/v3/api-docs/swagger-config", bodySnippet: `"validatorUrl"`},
+		{path: "/swagger/webjars/css/app.ac23e017.css", bodySnippet: "@charset"},
+		{path: "/swagger/webjars/js/app.2fab4ac5.js", bodySnippet: ""},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, tc.path, nil))
+			if response.Code != http.StatusOK {
+				t.Fatalf("expected 200 for %s, got %d", tc.path, response.Code)
+			}
+			if tc.bodySnippet != "" && !strings.Contains(response.Body.String(), tc.bodySnippet) {
+				t.Errorf("expected response for %s to contain %q, got %q", tc.path, tc.bodySnippet, response.Body.String())
+			}
+		})
+	}
+
+	// 根路径不应再注册（避免与业务路由冲突）。
+	for _, p := range []string{"/doc.html", "/webjars/css/app.ac23e017.css", "/v3/api-docs/swagger-config"} {
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, p, nil))
+		if response.Code != http.StatusNotFound {
+			t.Errorf("expected 404 at root path %s when UI is under /swagger, got %d", p, response.Code)
+		}
+	}
+
+	// swagger-config 响应体里的 url/configUrl/oauth2RedirectUrl 必须是 strip 掉
+	// uiPrefix 后的相对路径——knife4j 前端会基于 index.html 目录自动拼前缀。
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/swagger/v3/api-docs/swagger-config", nil))
+	body := response.Body.String()
+	for _, want := range []string{
+		`"configUrl": "/v3/api-docs/swagger-config"`,
+		`"oauth2RedirectUrl": "/swagger-ui/oauth2-redirect.html"`,
+		`"url": "/doc.json"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("expected swagger-config body to contain %s, got %q", want, body)
+		}
+	}
+	// 特别校验：url 字段不能重复包含 uiPrefix（否则前端拼接后会变成 /swagger/swagger/doc.json）。
+	if strings.Contains(body, `"url": "/swagger/`) {
+		t.Errorf("swagger-config url must be prefix-free for knife4j auto-prepending, got %q", body)
+	}
+}
+
 func TestInitSwaggerKnifeUnderPrefixGroup(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -249,11 +315,24 @@ func TestInitSwaggerKnifeSuppressesStaticRouteDebugLogsByDefault(t *testing.T) {
 			t.Fatalf("unexpected initialization error: %v", err)
 		}
 	})
-	if bytes.Contains(output, []byte("/webjars/")) {
-		t.Errorf("expected static webjars routes to be silenced from GIN-debug output, got:\n%s", output)
+	// 40 条静态资源以及 knife4j 约定的 swagger-config 探测端点应被静默。
+	for _, unwanted := range [][]byte{
+		[]byte("/webjars/"),
+		[]byte("/v3/api-docs/swagger-config"),
+	} {
+		if bytes.Contains(output, unwanted) {
+			t.Errorf("expected route %q to be silenced from GIN-debug output, got:\n%s", unwanted, output)
+		}
 	}
-	if bytes.Contains(output, []byte("/doc.html")) {
-		t.Errorf("expected /doc.html route to be silenced from GIN-debug output, got:\n%s", output)
+	// 用户可定制的动态路由（UI 页面、文档 JSON 端点）应保留日志，
+	// 方便用户确认 knife4go 把它们注册到了哪里。
+	for _, want := range [][]byte{
+		[]byte("/doc.html"),
+		[]byte("/swagger/doc.json"),
+	} {
+		if !bytes.Contains(output, want) {
+			t.Errorf("expected dynamic route %q to remain in GIN-debug output, got:\n%s", want, output)
+		}
 	}
 }
 
