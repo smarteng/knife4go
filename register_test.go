@@ -51,20 +51,6 @@ func TestRegisterRegistersDynamicRoutes(t *testing.T) {
 func TestRegisterRegistersAllStaticAssets(t *testing.T) {
 	routes := fakeRouterRoutes(t)
 	for _, want := range []string{
-		"/favicon.ico",
-		"/img/icons/android-chrome-192x192.png",
-		"/img/icons/android-chrome-512x512.png",
-		"/img/icons/apple-touch-icon-120x120.png",
-		"/img/icons/apple-touch-icon-152x152.png",
-		"/img/icons/apple-touch-icon-180x180.png",
-		"/img/icons/apple-touch-icon-60x60.png",
-		"/img/icons/apple-touch-icon-76x76.png",
-		"/img/icons/apple-touch-icon.png",
-		"/img/icons/favicon-16x16.png",
-		"/img/icons/favicon-32x32.png",
-		"/img/icons/msapplication-icon-144x144.png",
-		"/img/icons/mstile-150x150.png",
-		"/img/icons/safari-pinned-tab.svg",
 		"/webjars/css/app.ac23e017.css",
 		"/webjars/css/chunk-75464e7e.8fb93ba5.css",
 		"/webjars/css/chunk-d7d5f59c.a9ffbfcb.css",

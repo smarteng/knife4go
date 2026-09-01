@@ -3,13 +3,7 @@ package knife
 import (
 	"fmt"
 
-	"github.com/jasonlabz/knife4go/ui"
-	"github.com/jasonlabz/knife4go/ui/icons"
-	"github.com/jasonlabz/knife4go/ui/webjars/css"
-	"github.com/jasonlabz/knife4go/ui/webjars/fonts"
-	"github.com/jasonlabz/knife4go/ui/webjars/img"
-	"github.com/jasonlabz/knife4go/ui/webjars/js"
-	"github.com/jasonlabz/knife4go/ui/webjars/oauth"
+	"github.com/smarteng/knife4go/ui"
 )
 
 // Router 是 knife4go 注册静态 GET 路由所需的最小框架无关接口。
@@ -63,18 +57,8 @@ func RegisterOpenAPI(router Router, opts ...Opts) error {
 	router.GET(apiDocsPath+swaggerConfigSuffix, jsonContentType, []byte(configContent))
 
 	// 静态资产
-	for _, asset := range allAssets() {
+	for _, asset := range ui.AllAssets() {
 		router.GET(asset.Path, asset.ContentType, asset.Content)
 	}
 	return nil
-}
-
-// allAssets 返回全部静态资产。
-func allAssets() []ui.Asset {
-	assets := append([]ui.Asset{}, css.Assets...)
-	assets = append(assets, js.Assets...)
-	assets = append(assets, fonts.Assets...)
-	assets = append(assets, img.Assets...)
-	assets = append(assets, oauth.Assets...)
-	return append(assets, icons.Assets...)
 }

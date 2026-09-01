@@ -1,4 +1,4 @@
-module github.com/jasonlabz/knife4go
+module github.com/smarteng/knife4go
 
 go 1.25.0
 

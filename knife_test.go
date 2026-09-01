@@ -120,7 +120,6 @@ func TestInitHumaKnifeRegistersUIAndDocument(t *testing.T) {
 		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/v3/api-docs"`},
 		{path: "/webjars/css/app.ac23e017.css", bodySnippet: "@charset"},
 		{path: "/webjars/js/app.2fab4ac5.js", bodySnippet: ""},
-		{path: "/favicon.ico", bodySnippet: ""},
 	} {
 		t.Run(testCase.path, func(t *testing.T) {
 			response := httptest.NewRecorder()
@@ -144,7 +143,7 @@ func TestStaticRoutesAreHiddenFromOpenAPI(t *testing.T) {
 		t.Fatalf("unexpected initialization error: %v", err)
 	}
 	paths := api.OpenAPI().Paths
-	for _, p := range []string{"/doc.html", "/v3/api-docs", "/favicon.ico"} {
+	for _, p := range []string{"/doc.html", "/v3/api-docs", "/webjars/css/app.ac23e017.css"} {
 		if _, ok := paths[p]; ok {
 			t.Errorf("expected knife4go static route %q to be hidden from OpenAPI document", p)
 		}

@@ -6,8 +6,8 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gin-gonic/gin"
 
-	_gin "github.com/jasonlabz/knife4go/gin"
-	_huma "github.com/jasonlabz/knife4go/huma"
+	_gin "github.com/smarteng/knife4go/gin"
+	_huma "github.com/smarteng/knife4go/huma"
 )
 
 // InitSwaggerKnife 将 Knife4j UI、OpenAPI 文档端点与静态资产注册到 gin 路由组。
