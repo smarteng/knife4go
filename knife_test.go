@@ -181,3 +181,64 @@ func TestInitHumaKnifeWithPrefixGroupUsesDocumentUI(t *testing.T) {
 		t.Errorf("expected asset status 200, got %d", response.Code)
 	}
 }
+
+// captureGinDebugOutput 在 gin.DebugMode 下捕获注册期间的 [GIN-debug] 输出。
+// setup 内允许调用者注册路由；返回捕获到的完整字节。
+func captureGinDebugOutput(t *testing.T, setup func()) []byte {
+	t.Helper()
+	originalMode := gin.Mode()
+	originalWriter := gin.DefaultWriter
+	gin.SetMode(gin.DebugMode)
+	buf := &bytes.Buffer{}
+	gin.DefaultWriter = buf
+	defer func() {
+		gin.SetMode(originalMode)
+		gin.DefaultWriter = originalWriter
+	}()
+	setup()
+	return buf.Bytes()
+}
+
+func TestInitSwaggerKnifeSuppressesStaticRouteDebugLogsByDefault(t *testing.T) {
+	var router *gin.Engine
+	output := captureGinDebugOutput(t, func() {
+		router = gin.New()
+		if err := InitSwaggerKnife(router, Doc(openAPI303Document)); err != nil {
+			t.Fatalf("unexpected initialization error: %v", err)
+		}
+	})
+	if bytes.Contains(output, []byte("/webjars/")) {
+		t.Errorf("expected static webjars routes to be silenced from GIN-debug output, got:\n%s", output)
+	}
+	if bytes.Contains(output, []byte("/doc.html")) {
+		t.Errorf("expected /doc.html route to be silenced from GIN-debug output, got:\n%s", output)
+	}
+}
+
+func TestInitSwaggerKnifeVerboseKeepsDebugLogs(t *testing.T) {
+	var router *gin.Engine
+	output := captureGinDebugOutput(t, func() {
+		router = gin.New()
+		if err := InitSwaggerKnife(router, Doc(openAPI303Document), Verbose(true)); err != nil {
+			t.Fatalf("unexpected initialization error: %v", err)
+		}
+	})
+	if !bytes.Contains(output, []byte("/webjars/")) {
+		t.Errorf("expected verbose mode to keep static webjars debug logs, got:\n%s", output)
+	}
+}
+
+func TestInitSwaggerKnifeDoesNotAffectSubsequentBusinessRouteLogs(t *testing.T) {
+	var router *gin.Engine
+	output := captureGinDebugOutput(t, func() {
+		router = gin.New()
+		if err := InitSwaggerKnife(router, Doc(openAPI303Document)); err != nil {
+			t.Fatalf("unexpected initialization error: %v", err)
+		}
+		// 用户在 knife 注册之后自行注册业务路由，日志应该正常输出。
+		router.GET("/api/hello", func(c *gin.Context) {})
+	})
+	if !bytes.Contains(output, []byte("/api/hello")) {
+		t.Errorf("expected business route /api/hello to still appear in GIN-debug output, got:\n%s", output)
+	}
+}
