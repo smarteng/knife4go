@@ -61,7 +61,6 @@ func InitApiRouter() *gin.Engine {
 - [gin](https://github.com/gin-gonic/gin) v1.12.0
 - [swag](https://github.com/swaggo/swag)：knife4go 不依赖它，由宿主项目自行引入用于生成文档
 
-最小可运行示例见 [`_examples/gin`](./_examples/gin)。
 
 ## huma（可选）
 
@@ -89,8 +88,6 @@ func main() {
 	_ = router.Run(":8080")
 }
 ```
-
-最小可运行示例见 [`_examples/huma`](./_examples/huma)。
 
 ## 自定义文档与路径
 
