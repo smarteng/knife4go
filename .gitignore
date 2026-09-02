@@ -1,6 +1,6 @@
 target/
 !.mvn/wrapper/maven-wrapper.jar
-
+node_modules
 ### STS ###
 .apt_generated
 .classpath
@@ -24,7 +24,6 @@ front/.idea
 nbproject/private/
 build/
 nbbuild/
-dist/
 nbdist/
 .nb-gradle/
 

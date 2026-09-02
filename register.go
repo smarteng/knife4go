@@ -79,13 +79,7 @@ func withPrefix(uiPrefix, p string) string {
 const defaultGroupName = "default"
 
 // buildSwaggerConfigJSON 生成 swagger-config 端点响应体。
-//
-// 使用 urls 数组形式（而非单值 url 字段）承载文档 JSON 地址，这样即便只有一个
-// 文档也能让 knife4j 首页 #/home 渲染出"分组链接"UI，与多分组体验保持一致。
-// 内部字段均使用 strip 掉 uiPrefix 后的相对路径——因为 knife4j 前端会基于当前
-// UI 页面所在目录（window.location.pathname 的目录部分）自动拼接前缀（a + url）。
 func buildSwaggerConfigJSON(apiDocsPath, uiPrefix string) []byte {
-	// relativeURL := strings.TrimPrefix(apiDocsPath, uiPrefix)
 	return []byte(fmt.Sprintf(
 		`{"configUrl": %q,"oauth2RedirectUrl": %q,"urls": [{"name": %q,"url": %q,"location": %q}],"validatorUrl": ""}`,
 		swaggerConfigEndpoint,
@@ -98,14 +92,6 @@ func buildSwaggerConfigJSON(apiDocsPath, uiPrefix string) []byte {
 
 // RegisterOpenAPI 将 knife4go 的 UI 页面、OpenAPI 文档端点与全部静态资产注册到 router。
 // 文档必须经 Doc() 提供，否则返回错误；文档内容始终原样注册，不做任何改写。
-//
-// 挂载位置说明：
-//   - 用户通过 DocPath 指定 UI 页面路径（默认 /doc.html），knife4go 自动推导目录部分
-//     作为 uiPrefix，例如 DocPath("/swagger/index.html") -> uiPrefix="/swagger"。
-//   - APIDocsPath、swagger-config、oauth2-redirect、40 条静态资产均自动挂到 uiPrefix
-//     下，用户无需重复拼接前缀；APIDocsPath 若已包含 uiPrefix 前缀，则原样使用。
-//   - swagger-config 响应体里的 url/configUrl/oauth2RedirectUrl 一律使用 strip 掉
-//     uiPrefix 后的相对路径——因为 knife4j 前端会基于当前 UI 页面所在目录自行拼接前缀。
 func RegisterOpenAPI(router Router, opts ...Opts) error {
 	config := Config{}
 	for _, opt := range opts {

@@ -3,7 +3,7 @@
     <a-row class="markdown-row">
       <a-row class="globalparameters">
         <a-row class="gptips" v-html="$t('offline.des')">
-          Knife4j提供导出4种格式的离线文档(Html/Markdown/Word/OpenAPI)
+          这里提供导出4种格式的离线文档(Html/Markdown/Word/OpenAPI)
         </a-row>
       </a-row>
       <a-row class="knife4j-download-button">

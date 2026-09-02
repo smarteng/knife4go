@@ -5117,7 +5117,18 @@ SwaggerBootstrapUi.prototype.createApiInfoInstance = function (pathKey, mtype, a
       // swpinfo.description = marked(swpinfo.description);
       swpinfo.description = marked.parse(swpinfo.description);
     }
-    apiInfo.operationId = apiInfo.operationId || swpinfo.id;
+    // 当openapi中未提供operationId时，采用 method + path 转驼峰作为可读兜底
+    // 例如 GET /config/bank/info => getConfigBankInfo
+    // 这样左侧导航链接形如 #/default/ConfigAPI/getConfigBankInfo，而非md5哈希
+    if (!apiInfo.operationId) {
+      var _opSegs = path.replace(/[{}]/g, '').split(/[^A-Za-z0-9]+/).filter(function (s) {
+        return s && s.length > 0;
+      });
+      var _opName = _opSegs.map(function (s) {
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }).join('');
+      apiInfo.operationId = _opName ? (mtype.toLowerCase() + _opName) : swpinfo.id;
+    }
     swpinfo.operationId = apiInfo.operationId;
     swpinfo.summary = KUtils.toString(apiInfo.summary, '').replace(/\//g, '-');
     // 针对summary做一次非空判断

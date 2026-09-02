@@ -29,6 +29,26 @@ export default function wordText(instance) {
 }
 
 /**
+ * 将 URL 字符串转换为 <a href> 超链接 HTML 片段。
+ *
+ * 处理规则：
+ *   - 空值 / undefined / null：返回空串，避免生成空 href 干扰阅读体验；
+ *   - http/https 完整 URL 或站内路径（"/" 开头）：href 与显示文本均使用原文；
+ *   - 其它值（如占位符 "N/A"、"-"）：原样输出为纯文本，不加超链接。
+ * @param {string} url 原始 URL 文本
+ * @returns {string} 可直接拼接到 innerHTML 的 HTML 片段
+ */
+function toKnife4jLink(url) {
+  if (url === null || url === undefined) return '';
+  var text = String(url).trim();
+  if (text === '') return '';
+  var isAbsolute = /^https?:\/\//i.test(text);
+  var isSitePath = text.charAt(0) === '/';
+  if (!isAbsolute && !isSitePath) return text;
+  return '<a href="' + text + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
+}
+
+/**
  * 主动换行
  * @param {*} markdownCollections 
  */
@@ -167,10 +187,10 @@ function createWordBasicInfo(instance, markdownCollections) {
   markdownCollections.push('<div class="knife4j-word-line"><strong>GroupName</strong>:' + instance.name + '</div>');
   markdownCollections.push('<div class="knife4j-word-divider"></div>');
 
-  markdownCollections.push('<div class="knife4j-word-line"><strong>分组Url</strong>:' + instance.url + '</div>');
+  markdownCollections.push('<div class="knife4j-word-line"><strong>分组Url</strong>:' + toKnife4jLink(instance.url) + '</div>');
   markdownCollections.push('<div class="knife4j-word-divider"></div>');
 
-  markdownCollections.push('<div class="knife4j-word-line"><strong>分组Location</strong>:' + instance.location + '</div>');
+  markdownCollections.push('<div class="knife4j-word-line"><strong>分组Location</strong>:' + toKnife4jLink(instance.location) + '</div>');
   markdownCollections.push('<div class="knife4j-word-divider"></div>');
 
   markdownCollections.push('</div>');
