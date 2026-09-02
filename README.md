@@ -149,10 +149,6 @@ knife4go 的注册逻辑是框架无关的，接入新框架只需两步：
 
 2. 调用 `knife4go.RegisterOpenAPI(router, opts...)`，或参照 `gin/`、`huma/` 子包封装 `InitSwaggerKnife` / `InitHumaKnife` 便捷入口。
 
-## 示例效果
-
-![img](./_examples/knife4go_example.png)
-
 ## Links
 
 - [Knife4j](https://github.com/xiaoymin/knife4j)
