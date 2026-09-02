@@ -44,7 +44,9 @@ func APIDocsPath(path string) Opts {
 // Verbose 控制 knife4go 注册静态资源时是否保留框架自身的路由日志。
 //
 // 默认（不传或 Verbose(false)）：InitSwaggerKnife 会在注册期间临时抑制
-// gin 的 [GIN-debug] 路由输出，避免 40 条固定的静态资源路由把业务路由日志淹没；
+// gin 的 [GIN-debug] 路由输出，覆盖 40 条固定静态资源与 knife4j 前端约定的
+// /v3/api-docs/swagger-config 探测端点，避免这些固定路由把用户业务路由日志淹没；
+// UI 页面（DocPath）与文档 JSON（APIDocsPath）两条动态路由的日志始终保留。
 // 注册结束后立即恢复，用户后续自行注册的路由日志不受影响。
 // 传入 Verbose(true) 可关闭该抑制，恢复框架默认行为。
 func Verbose(v bool) Opts {

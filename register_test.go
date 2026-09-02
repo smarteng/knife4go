@@ -40,7 +40,7 @@ func TestRegisterRegistersDynamicRoutes(t *testing.T) {
 	if got := routeContent(routes, "/swagger/doc.json"); string(got) != openAPI303Document {
 		t.Errorf("expected /swagger/doc.json to serve the OpenAPI document, got %q", got)
 	}
-	if got := routeContent(routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"url": "/swagger/doc.json"`) {
+	if got := routeContent(routes, "/v3/api-docs/swagger-config"); !strings.Contains(string(got), `"urls": [{"name": "default","url": "/swagger/doc.json"`) {
 		t.Errorf("expected swagger-config to contain the document URL, got %q", got)
 	}
 	if got := routeContent(routes, "/doc.html"); !bytes.Contains(got, []byte("knife4j-vue")) {
@@ -117,7 +117,7 @@ func TestRegisterConfigContentUsesPrefixFreeURLs(t *testing.T) {
 	for _, want := range []string{
 		`"configUrl": "/v3/api-docs/swagger-config"`,
 		`"oauth2RedirectUrl": "/swagger-ui/oauth2-redirect.html"`,
-		`"url": "/swagger/doc.json"`,
+		`"urls": [{"name": "default","url": "/swagger/doc.json","location": "/swagger/doc.json"}]`,
 	} {
 		if !strings.Contains(config, want) {
 			t.Errorf("expected config to contain %s, got %q", want, config)
@@ -141,4 +141,62 @@ func routeContent(routes []fakeRoute, path string) []byte {
 		}
 	}
 	return nil
+}
+
+// TestUIPrefixOf 覆盖 uiPrefixOf 各类边界输入（根目录、多级目录、末尾斜杠等）。
+func TestUIPrefixOf(t *testing.T) {
+	for _, tc := range []struct {
+		in   string
+		want string
+	}{
+		{"/doc.html", ""},
+		{"/swagger/index.html", "/swagger"},
+		{"/a/b/index.html", "/a/b"},
+		{"/", ""},
+		{"/nested/", "/nested"},
+		{"", ""},
+	} {
+		t.Run(tc.in, func(t *testing.T) {
+			if got := uiPrefixOf(tc.in); got != tc.want {
+				t.Errorf("uiPrefixOf(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestWithPrefix 覆盖 withPrefix 各类前缀拼接情形。
+func TestWithPrefix(t *testing.T) {
+	for _, tc := range []struct {
+		name, prefix, in, want string
+	}{
+		{"empty prefix keeps path", "", "/webjars/x.js", "/webjars/x.js"},
+		{"prefix prepended", "/swagger", "/webjars/x.js", "/swagger/webjars/x.js"},
+		{"already prefixed keeps original", "/swagger", "/swagger/webjars/x.js", "/swagger/webjars/x.js"},
+		{"equals prefix returns as-is", "/swagger", "/swagger", "/swagger"},
+		{"partial-match string is prepended", "/swag", "/swagger/x.js", "/swag/swagger/x.js"},
+		{"root prefix (empty) with root path", "", "/", "/"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := withPrefix(tc.prefix, tc.in); got != tc.want {
+				t.Errorf("withPrefix(%q, %q) = %q, want %q", tc.prefix, tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestNormalizeAbsPath 覆盖 normalizeAbsPath 的三条主分支：空、缺前导斜杠、正常。
+func TestNormalizeAbsPath(t *testing.T) {
+	for _, tc := range []struct {
+		name, in, fallback, want string
+	}{
+		{"empty uses fallback", "", "/doc.html", "/doc.html"},
+		{"missing leading slash", "swagger/doc.json", "/x", "/swagger/doc.json"},
+		{"already absolute stays", "/api/openapi.json", "/x", "/api/openapi.json"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := normalizeAbsPath(tc.in, tc.fallback); got != tc.want {
+				t.Errorf("normalizeAbsPath(%q, %q) = %q, want %q", tc.in, tc.fallback, got, tc.want)
+			}
+		})
+	}
 }

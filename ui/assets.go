@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"path"
 	"strings"
+	"sync"
 )
 
 // Asset 描述一条静态 GET 路由：固定路径、Content-Type 与响应内容。
@@ -45,31 +46,45 @@ func contentTypeFor(rel string) string {
 	return contentTypeByExt[strings.ToLower(path.Ext(rel))]
 }
 
+// 全部静态资产缓存：embed 内容在进程生命周期内不会变化，一次遍历后即可复用，
+// 避免每次 RegisterOpenAPI 都触发 40 余次 fs.ReadFile。
+var (
+	assetsOnce   sync.Once
+	cachedAssets []Asset
+)
+
 // AllAssets 返回内嵌 dist/ 目录下的全部静态资产，
 // 但不包含 doc.html —— 后者由 DocHtml 单独提供，注册路径可经 DocPath 定制。
 // 结果按目录遍历顺序返回；每个 Asset 的 Path 以 "/" 开头，Content 为原始字节。
+// 内部结果被 sync.Once 缓存，多次调用零额外开销。
 func AllAssets() []Asset {
-	var assets []Asset
-	_ = fs.WalkDir(distFS, "dist", func(p string, d fs.DirEntry, err error) error {
+	assetsOnce.Do(loadAssets)
+	return cachedAssets
+}
+
+// loadAssets 遍历 embed FS 载入全部静态资产（除 doc.html），仅由 sync.Once 调用。
+func loadAssets() {
+	const root = "dist"
+	const docHTMLEntry = "dist/doc.html"
+	_ = fs.WalkDir(distFS, root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
-		if p == "dist/doc.html" {
+		if p == docHTMLEntry {
 			return nil
 		}
 		b, readErr := distFS.ReadFile(p)
 		if readErr != nil {
 			return readErr
 		}
-		rel := "/" + strings.TrimPrefix(p, "dist/")
-		assets = append(assets, Asset{
+		rel := "/" + strings.TrimPrefix(p, root+"/")
+		cachedAssets = append(cachedAssets, Asset{
 			Path:        rel,
 			ContentType: contentTypeFor(rel),
 			Content:     b,
 		})
 		return nil
 	})
-	return assets
 }
 
 // DocHtml 是 Knife4j UI 页面资产。

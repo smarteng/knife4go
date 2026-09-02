@@ -28,7 +28,7 @@ func TestInitSwaggerKnifeRegistersUIAndDocument(t *testing.T) {
 	}{
 		{path: "/swagger/doc.json", wantDocument: []byte(openAPI303Document)},
 		{path: "/doc.html", bodySnippet: "knife4j-vue"},
-		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/swagger/doc.json"`},
+		{path: "/v3/api-docs/swagger-config", bodySnippet: `"urls": [{"name": "default","url": "/swagger/doc.json"`},
 	} {
 		t.Run(testCase.path, func(t *testing.T) {
 			response := httptest.NewRecorder()
@@ -110,6 +110,10 @@ func TestInitSwaggerKnifeCustomAPIDocsPath(t *testing.T) {
 	if !strings.Contains(response.Body.String(), wantURL) {
 		t.Errorf("expected swagger-config to reference custom API docs path %s, got %q", wantURL, response.Body.String())
 	}
+	wantLocation := `"location": "` + customPath + `"`
+	if !strings.Contains(response.Body.String(), wantLocation) {
+		t.Errorf("expected swagger-config to reference custom API docs location %s, got %q", wantLocation, response.Body.String())
+	}
 }
 
 // TestInitSwaggerKnifeDocPathAutoPropagatesPrefix 覆盖用户把 UI 页面挂到子目录
@@ -166,7 +170,7 @@ func TestInitSwaggerKnifeDocPathAutoPropagatesPrefix(t *testing.T) {
 	for _, want := range []string{
 		`"configUrl": "/v3/api-docs/swagger-config"`,
 		`"oauth2RedirectUrl": "/swagger-ui/oauth2-redirect.html"`,
-		`"url": "/doc.json"`,
+		`"urls": [{"name": "default","url": "/doc.json","location": "/doc.json"}]`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("expected swagger-config body to contain %s, got %q", want, body)
@@ -225,7 +229,7 @@ func TestInitHumaKnifeRegistersUIAndDocument(t *testing.T) {
 	}{
 		{path: "/swagger/doc.json", wantContent: []byte(openAPI303Document)},
 		{path: "/doc.html", bodySnippet: "knife4j-vue"},
-		{path: "/v3/api-docs/swagger-config", bodySnippet: `"url": "/swagger/doc.json"`},
+		{path: "/v3/api-docs/swagger-config", bodySnippet: `"urls": [{"name": "default","url": "/swagger/doc.json"`},
 		{path: "/webjars/css/app.ac23e017.css", bodySnippet: "@charset"},
 		{path: "/webjars/js/app.2fab4ac5.js", bodySnippet: ""},
 	} {
