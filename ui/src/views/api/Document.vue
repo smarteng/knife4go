@@ -81,6 +81,10 @@
       <template slot="datatypeTemplate" slot-scope="text, record">
         <data-type :text="text" :record="record"></data-type>
       </template>
+      <template slot="schemaValueTemplate" slot-scope="text, record">
+        <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+        <span v-else>{{ text }}</span>
+      </template>
     </a-table>
     <div v-if="responseCodeDisplayStatus">
       <div class="api-title" v-html="$t('doc.response')">
@@ -119,6 +123,10 @@
             <template slot="descriptionTemplate" slot-scope="text">
               <span v-html="text"></span>
             </template>
+            <template slot="schemaValueTemplate" slot-scope="text, record">
+              <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+              <span v-else>{{ text }}</span>
+            </template>
           </a-table>
           <div class="api-title" v-html="$t('doc.responseExample')">
             响应示例
@@ -150,6 +158,10 @@
         rowKey="id" size="small" :pagination="page">
         <template slot="descriptionTemplate" slot-scope="text">
           <span v-html="text"></span>
+        </template>
+        <template slot="schemaValueTemplate" slot-scope="text, record">
+          <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+          <span v-else>{{ text }}</span>
         </template>
       </a-table>
       <div class="api-title" v-html="$t('doc.responseExample')">
@@ -257,6 +269,31 @@ export default {
       this.responseStatuscolumns = inst.table.documentResponseStatusColumns;
       this.responseHeaderColumns = inst.table.documentResponseHeaderColumns;
       this.responseParametersColumns = inst.table.documentResponseColumns;
+    },
+    // hasModel 判断当前请求参数 record 的 schemaValue 是否指向一个已解析的 Model,
+    // 仅当存在于 $Knife4jModels 中时才渲染为可跳转链接, 避免对基本类型(string/int 等)套 <a>。
+    hasModel(record) {
+      if (!record || !record.schema || !record.schemaValue) {
+        return false;
+      }
+      var key = Constants.globalTreeTableModelParams + this.swaggerInstance.id;
+      return this.$Knife4jModels.exists(key, record.schemaValue);
+    },
+    // gotoModel 跳转到 SwaggerModels 页面, 通过 query.model 指定要定位的 Model 名称。
+    // knife4j 采用 tab 页签架构, SwaggerModels 组件会被 tab 系统激活或新建;
+    // SwaggerModels 组件本身监听 $route 变化, 每次都会重新定位到目标 Model。
+    gotoModel(modelName) {
+      if (!modelName) {
+        return;
+      }
+      var groupName = this.swaggerInstance && this.swaggerInstance.name;
+      if (!groupName) {
+        return;
+      }
+      this.$router.push({
+        path: '/SwaggerModels/' + groupName,
+        query: { model: modelName }
+      }).catch(function () { /* 忽略重复导航异常 */ });
     },
     copyApiUrl() {
       var that = this;
