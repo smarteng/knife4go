@@ -10,6 +10,8 @@ swag 生成文档 → swag.ReadDoc() → knife4go.Doc(doc) → InitSwaggerKnife(
 
 一行接入，gin + swagger + Knife4j UI 一步到位。knife4go 自身不依赖 swag，swag 由宿主项目提供。
 
+> UI 页面与文档端点均可通过 `DocPath` / `APIDocsPath` 自定义；`DocPath` 所在目录会作为 UI 静态资源的前缀，其它资源自动继承，无需重复声明。
+
 > 同时提供 `huma/` 子包，为 [Huma v2](https://huma.rocks/) 挂载同一套 UI；其他 Web 框架只需实现约 15 行的 `knife4go.Router` 接口即可接入（见「扩展新框架」）。
 
 全部 UI 资产已数据化内嵌，运行时不依赖任何外部静态文件。
@@ -22,7 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/swag"
-	knife4go "github.com/jasonlabz/knife4go"
+	knife4go "github.com/smarteng/knife4go"
 
 	_ "{module_path}/docs" // swag 生成的文档包，路径须与你项目的 swag 输出目录一致
 )
@@ -30,13 +32,17 @@ import (
 // InitApiRouter 返回带 knife4go UI 的路由。
 func InitApiRouter() *gin.Engine {
 	router := gin.Default()
-	// 注册到路由组时，端点自动带组前缀，如 /demo/doc.html
-	serverGroup := router.Group("/demo")
+	// 注册到路由组时，端点自动带组前缀，如 /demo/swagger/index.html
+	srv := router.Group("/demo")
 	doc, err := swag.ReadDoc(swag.Name)
 	if err != nil {
 		panic(fmt.Errorf("read OpenAPI document from swag: %w", err))
 	}
-	if err := knife4go.InitSwaggerKnife(serverGroup, knife4go.Doc(doc)); err != nil {
+	if err := knife4go.InitSwaggerKnife(srv,
+		knife4go.Doc(doc),
+		knife4go.DocPath("/swagger/index.html"),
+		knife4go.APIDocsPath("/swagger/doc.json"),
+	); err != nil {
 		panic(err)
 	}
 	return router
@@ -68,7 +74,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
-	knife "github.com/jasonlabz/knife4go"
+	knife "github.com/smarteng/knife4go"
 )
 
 func main() {
@@ -88,11 +94,24 @@ func main() {
 
 ## 自定义文档与路径
 
-`Doc()` 也可传入任意来源的 OpenAPI 3.0 JSON（不限于 swag）；UI 页面路径默认 `/doc.html`，可用 `DocPath()` 自定义：
+`Doc()` 也可传入任意来源的 OpenAPI 3.0 JSON（不限于 swag）。可通过下列选项自定义注册行为：
+
+| Option | 默认值 | 说明 |
+| --- | --- | --- |
+| `Doc(json)` | 必填 | OpenAPI 3.0 JSON 字符串，原样注册，不做改写 |
+| `DocPath(path)` | `/doc.html` | UI 页面路径；其所在目录会作为静态资源前缀，其它资源自动继承 |
+| `APIDocsPath(path)` | `/swagger/doc.json` | OpenAPI 文档 JSON 端点路径，同时写入 `swagger-config.urls[0].url` |
+| `Verbose(v)` | `false`（gin） | `true` 时保留 gin 注册 40 条静态资源的 `[GIN-debug]` 日志 |
 
 ```go
-_ = knife4go.InitSwaggerKnife(router, knife4go.Doc(docJSON), knife4go.DocPath("/api-doc"))
+_ = knife4go.InitSwaggerKnife(router,
+	knife4go.Doc(docJSON),
+	knife4go.DocPath("/swagger/index.html"),
+	knife4go.APIDocsPath("/swagger/doc.json"),
+)
 ```
+
+> 若 `APIDocsPath` 传入的路径已带上 `DocPath` 目录前缀（如上例都在 `/swagger/` 下），knife4go 不会二次拼接前缀。
 
 ## 注册位置
 
@@ -104,13 +123,16 @@ _ = knife4go.InitSwaggerKnife(router, knife4go.Doc(docJSON), knife4go.DocPath("/
 
 ## HTTP 端点
 
-注册后提供以下端点（注册在带前缀的路由组时自动带组前缀，如 `/demo/doc.html`）：
+注册后提供以下端点（注册在带前缀的路由组时自动带组前缀，如 `/demo/swagger/index.html`）：
 
-| 路径 | 说明 |
-| --- | --- |
-| `/doc.html` | Knife4j UI 页面（路径可用 `DocPath()` 修改） |
-| `/v3/api-docs` | OpenAPI 3.0 文档（JSON） |
-| `/v3/api-docs/swagger-config` | UI 配置端点（Knife4j 前端据此加载文档） |
+| 路径 | 默认值 | 说明 |
+| --- | --- | --- |
+| UI 页面 | `/doc.html` | Knife4j UI 入口，可用 `DocPath()` 修改（示例：`/swagger/index.html`） |
+| OpenAPI 文档 | `/swagger/doc.json` | OpenAPI 3.0 文档 JSON，可用 `APIDocsPath()` 修改 |
+| UI 配置端点 | `/v3/api-docs/swagger-config` | Knife4j 前端硬编码探测的能力配置端点，路径固定不可修改 |
+| oauth2 回调 | `/swagger-ui/oauth2-redirect.html` | OAuth2 授权回调页，随 UI 前缀自动前置 |
+
+此外，`DocPath` 所在目录（如 `/swagger`）会作为 UI 前缀，40 条 knife4j 前端静态资源（`webjars/**`、`img/**` 等）都会挂在该前缀下。
 
 ## 扩展新框架
 
