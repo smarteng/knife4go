@@ -85,14 +85,14 @@ const defaultGroupName = "default"
 // 内部字段均使用 strip 掉 uiPrefix 后的相对路径——因为 knife4j 前端会基于当前
 // UI 页面所在目录（window.location.pathname 的目录部分）自动拼接前缀（a + url）。
 func buildSwaggerConfigJSON(apiDocsPath, uiPrefix string) []byte {
-	relativeURL := strings.TrimPrefix(apiDocsPath, uiPrefix)
+	// relativeURL := strings.TrimPrefix(apiDocsPath, uiPrefix)
 	return []byte(fmt.Sprintf(
 		`{"configUrl": %q,"oauth2RedirectUrl": %q,"urls": [{"name": %q,"url": %q,"location": %q}],"validatorUrl": ""}`,
 		swaggerConfigEndpoint,
 		oauth2RedirectPath,
 		defaultGroupName,
-		relativeURL,
-		relativeURL,
+		apiDocsPath,
+		apiDocsPath,
 	))
 }
 
