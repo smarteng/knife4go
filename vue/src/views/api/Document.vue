@@ -93,8 +93,8 @@
             <div v-html="text"></div>
           </template>
           <template v-else-if="column.dataIndex === 'schema'">
-            <span v-if="text != null" v-html="text"></span>
-            <span v-else-if="record.schemaTitle != null" v-html="record.schemaTitle"></span>
+            <span v-if="record.schema != null">{{ record.schema }}</span>
+            <span v-else-if="record.schemaTitle != null">{{ record.schemaTitle }}</span>
           </template>
         </template>
       </a-table>
