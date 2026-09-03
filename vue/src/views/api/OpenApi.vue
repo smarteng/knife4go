@@ -77,9 +77,21 @@ export default {
     this.openApiRaw = KUtils.json5stringify(this.api.openApiRaw);
     this.name = this.api.summary + "_OpenAPI.json";
     // console.log(this.api);
-    setTimeout(() => {
+    // 保存已创建的 ClipboardJS 实例，供组件销毁时释放
+    this.$_clipboards = [];
+  },
+  mounted() {
+    // DOM 挂载后再绑定 clipboard，避免 setTimeout 硬等导致的时序不可靠
+    this.$nextTick(() => {
       this.copyOpenApi();
-    }, 500);
+    });
+  },
+  beforeUnmount() {
+    // 释放 ClipboardJS 实例，防止内存泄漏
+    if (Array.isArray(this.$_clipboards)) {
+      this.$_clipboards.forEach(c => c && c.destroy && c.destroy());
+      this.$_clipboards = [];
+    }
   },
   methods: {
     getCurrentI18nInstance() {
@@ -106,7 +118,9 @@ export default {
     },
     copyOpenApi() {
       const btnId = "btnCopyOpenApi" + this.api.id
-      const clipboard = new ClipboardJS("#" + btnId, {
+      const el = document.getElementById(btnId)
+      if (!el) return
+      const clipboard = new ClipboardJS(el, {
         text: () => {
           return this.openApiRaw;
         }
@@ -125,6 +139,7 @@ export default {
         const failMessage = inst.message.copy.open.fail
         message.info(failMessage);
       });
+      this.$_clipboards.push(clipboard);
     }
   }
 }

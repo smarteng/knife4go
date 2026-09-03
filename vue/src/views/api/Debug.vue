@@ -283,6 +283,7 @@ import { useknife4jModels } from '@/store/knife4jModels.js'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import localStore from '@/store/local.js'
+import eventBus from '@/store/eventBus.js'
 import { UnlockOutlined, DownOutlined } from '@ant-design/icons-vue'
 
 export default {
@@ -444,12 +445,12 @@ export default {
     } else {
       this.debugUrlStyle = "width: 80%;"
     }
-    // 监听全局参数更新事件
-    this.$root.$on('global-parameters-updated', this.handleGlobalParametersUpdate);
+    // 监听全局参数更新事件（Vue 3 已移除根实例事件总线，改用自建 eventBus）
+    eventBus.on('global-parameters-updated', this.handleGlobalParametersUpdate);
   },
   beforeUnmount() {
     // 组件销毁前移除事件监听
-    this.$root.$off('global-parameters-updated', this.handleGlobalParametersUpdate);
+    eventBus.off('global-parameters-updated', this.handleGlobalParametersUpdate);
   },
   watch: {
     language: function (val, oldval) {

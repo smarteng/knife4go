@@ -202,7 +202,7 @@
     font-size: 20px;
     margin: 0 0 0 12px;
     font-family: "Myriad Pro", "Helvetica Neue", Arial, Helvetica,
-    sans-serif;
+      sans-serif;
     font-weight: 600;
   }
 }
@@ -230,7 +230,7 @@
     font-size: 20px;
     margin: 0 0 0 12px;
     font-family: "Myriad Pro", "Helvetica Neue", Arial, Helvetica,
-    sans-serif;
+      sans-serif;
     font-weight: 600;
   }
 }
@@ -534,10 +534,11 @@
   .ant-input-group-addon {
     background: #49cc90;
 
-    .ant-select-selection-selected-value{
+    .ant-select-selection-selected-value {
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -558,6 +559,7 @@
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -578,6 +580,7 @@
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -598,6 +601,7 @@
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -618,6 +622,7 @@
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -638,6 +643,7 @@
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -658,6 +664,7 @@
       color: #FFF;
     }
   }
+
   .ant-select-selection-item {
     color: #FFF;
   }
@@ -667,17 +674,21 @@
 .knife4j-debug-request-type {
   margin-top: 0;
   display: flex;
+  align-items: center;
 }
 
 .knife4j-debug-request-content-type {
-  width: 360px;
+  // 让 radio-group 内容自适应，避免因固定宽度不足导致 radio 文本换行/挤压
   height: 35px;
   line-height: 35px;
+  white-space: nowrap;
 }
 
 .knife4j-debug-request-content-type-float {
-  float: left;
-  width: 360px;
+  // 使用 flex 布局后无需 float，也无需固定宽度
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
 }
 
 
