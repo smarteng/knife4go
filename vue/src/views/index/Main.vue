@@ -62,14 +62,28 @@
             <a-col :span="5">
               <h3 v-html="$t('homePage.groupUrl')"></h3>
             </a-col>
-            <a-col :span="19"><span v-html="swaggerCurrentInstance.url" /></a-col>
+            <a-col :span="19">
+              <a
+                v-if="swaggerCurrentInstance.url"
+                :href="swaggerCurrentInstance.url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >{{ swaggerCurrentInstance.url }}</a>
+            </a-col>
           </a-row>
           <a-divider class="divider" />
           <a-row class="content-line">
             <a-col :span="5">
               <h3 v-html="$t('homePage.groupLocation')"></h3>
             </a-col>
-            <a-col :span="19"><span v-html="swaggerCurrentInstance.location" /></a-col>
+            <a-col :span="19">
+              <a
+                v-if="swaggerCurrentInstance.location"
+                :href="swaggerCurrentInstance.location"
+                target="_blank"
+                rel="noopener noreferrer"
+              >{{ swaggerCurrentInstance.location }}</a>
+            </a-col>
           </a-row>
           <a-divider class="divider" />
           <a-row class="content-line">

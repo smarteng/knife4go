@@ -264,6 +264,10 @@
      this.$_clipboards = [];
    },
    mounted() {
+     // 配置 ant-design-vue message 的位置与去重策略：
+     // - top: 80  距顶部 80px（ant-design-vue 要求 number 类型，单位 px；不能传 '80px' 字符串）
+     // - maxCount: 1  同一时刻最多只显示 1 条 message，避免同一次点击叠出多条相同提示
+     message.config({ top: 80, maxCount: 1 });
      // DOM 挂载完成后再绑定 ClipboardJS，避免 setTimeout 硬等导致的时序不可靠
      this.$nextTick(() => {
        this.copyApiAddress();
