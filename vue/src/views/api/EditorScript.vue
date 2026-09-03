@@ -8,21 +8,10 @@
 <script>
 import { VAceEditor } from 'vue3-ace-editor'
 import ace from "ace-builds";
-// Vite 环境下 vue3-ace-editor 不使用 window.ace 全局实例,
-// 必须用 ?url 拿到构建后 module 文件的 URL, 通过 ace.config.setModuleUrl 显式注册,
-// 否则 ace 内部 require("ace/mode/xxx") 返回 undefined, 访问 .Mode 时崩溃
-// (堆栈: ext-language_tools -> Cannot read properties of undefined (reading 'Mode'))。
-// 参考 EditorShow.vue 中的相同注册模式。
-import modeJavascript from "ace-builds/src-noconflict/mode-javascript?url";
-import modeTypescript from "ace-builds/src-noconflict/mode-typescript?url";
-import themeEclipse from "ace-builds/src-noconflict/theme-eclipse?url";
-import extLanguageTools from "ace-builds/src-noconflict/ext-language_tools?url";
-
-ace.config.setModuleUrl('ace/mode/javascript', modeJavascript)
-ace.config.setModuleUrl('ace/mode/typescript', modeTypescript)
-ace.config.setModuleUrl('ace/theme/eclipse', themeEclipse)
-ace.config.setModuleUrl('ace/ext/language_tools', extLanguageTools)
-
+import "ace-builds/src-noconflict/mode-typescript.js";
+import "ace-builds/src-noconflict/mode-javascript.js";
+import "ace-builds/src-noconflict/theme-eclipse.js";
+import "ace-builds/src-noconflict/ext-language_tools";
 export default {
   name: "EditorShow",
   components: { editor: VAceEditor },
@@ -38,7 +27,7 @@ export default {
       default: false,
     }
   },
-  emits: ['showDescription', 'change'],
+  emits: ['showDescription'],
   data() {
     return {
       lang: "javascript",
@@ -68,8 +57,10 @@ export default {
     editorInit(editor) {
       var that = this;
       this.editor = editor;
-      // mode/theme/ext 已在模块顶部通过 ace.config.setModuleUrl 全局注册,
-      // 无需再手动 require;组件初始化只需要根据 props 设置语言即可。
+      // require("brace/ext/language_tools"); // language extension prerequsite...
+      // require('brace/mode/javascript');
+      // require('brace/mode/typescript');
+      // require("brace/theme/eclipse");
       if (this.tsMode) {
         this.lang = "typescript";
       }

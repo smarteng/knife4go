@@ -43,20 +43,42 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      '/swagger': {
-        target: `http://localhost:14010/swagger`,
+      '/api': {
+        target: `http://localhost:8990`,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/swagger/, '')
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   },
   build: {
+    // 提高 chunk 大小警告阈值（单位 KB），避免第三方大依赖触发提示
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       input: 'doc.html',
       output: {
         chunkFileNames: 'webjars/js/[name]-[hash].js',
         entryFileNames: 'webjars/js/[name]-[hash].js',
-        assetFileNames: 'webjars/[ext]/[name]-[hash].[ext]'
+        assetFileNames: 'webjars/[ext]/[name]-[hash].[ext]',
+        // 手动拆分 vendor：把重型第三方依赖拆到独立 chunk，浏览器可并行下载 + 长期缓存
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'vue-i18n', 'pinia'],
+          'vendor-antd': ['ant-design-vue', '@ant-design/icons-vue'],
+          'vendor-editor': ['vue3-ace-editor', 'ace-builds'],
+          'vendor-mermaid': ['mermaid'],
+          'vendor-utils': [
+            'lodash',
+            'axios',
+            'dayjs',
+            'marked',
+            'crypto-js',
+            'qs',
+            'json5',
+            'xml2js',
+            'clipboard',
+            'async',
+            'localforage'
+          ]
+        }
       }
     }
   }

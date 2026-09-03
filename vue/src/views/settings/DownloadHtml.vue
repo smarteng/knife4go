@@ -121,11 +121,11 @@
 </template>
 <script>
 /* import OnlineDocument from "@/views/api/OnlineDocument"; */
-import { defineAsyncComponent } from 'vue'
+import OnlineDocument from '@/views/api/OnlineDocument.vue'
 
 export default {
   components: {
-    'OnlineDocument': defineAsyncComponent(() => import('@/views/api/OnlineDocument.vue'))
+    OnlineDocument
   },
   props: {
     instance: {

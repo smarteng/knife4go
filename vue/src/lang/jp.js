@@ -537,6 +537,7 @@ const langOptions = {
     fileNotEmpty: ' ファイルは空にできません'
   },
   script: {
+    title: 'スクリプト',
     JSExample: 'JSテンプレートの例',
     TSExample: 'TSテンプレートの例',
   }

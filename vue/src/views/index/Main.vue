@@ -95,8 +95,9 @@
   </a-layout-content>
 </template>
 <script>
-import { computed, defineAsyncComponent } from 'vue'
+import { computed } from 'vue'
 import { useGlobalsStore } from '@/store/modules/global.js'
+import Markdown from '@/components/Markdown/index.vue'
 
 export default {
   props: {
@@ -105,7 +106,7 @@ export default {
     }
   },
   components: {
-    "Markdown": defineAsyncComponent(() => import('@/components/Markdown/index.vue'))
+    Markdown
   },
   setup() {
     const globalsStore = useGlobalsStore()

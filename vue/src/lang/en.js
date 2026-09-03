@@ -546,6 +546,7 @@ const langOptions = {
     fileNotEmpty:' file cannot be empty'
   },
   script: {
+    title: 'Script',
     JSExample: 'JSExample',
     TSExample: 'TSExample',
   }

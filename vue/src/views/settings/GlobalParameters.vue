@@ -62,7 +62,6 @@ import localStore from '@/store/local.js'
 import { useI18n } from 'vue-i18n'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import eventBus from '@/core/eventBus'
 
 export default {
   props: {
@@ -209,10 +208,10 @@ export default {
         const dfv = val;
         dfv[this.groupId] = this.globalParameters;
         localStore.setItem(Constants.globalParameter, dfv);
-        // 发送全局参数更新事件, 使 Debug 页刷新参数 (Vue 3 不再支持 $root.$emit)
-        eventBus.emit('global-parameters-updated', {
-          groupId: this.groupId,
-          parameters: this.globalParameters
+        // 发送全局参数更新事件，使用Vue根实例作为事件总线
+        this.$root.$emit('global-parameters-updated', { 
+          groupId: this.groupId, 
+          parameters: this.globalParameters 
         });
       })
     },
@@ -242,10 +241,10 @@ export default {
             const dfv = val;
             dfv[key] = this.globalParameters;
             localStore.setItem(Constants.globalParameter, dfv);
-            // 发送全局参数更新事件, 使 Debug 页刷新参数 (Vue 3 不再支持 $root.$emit)
-            eventBus.emit('global-parameters-updated', {
-              groupId: key,
-              parameters: gpInstance.globalParameters
+            // 发送全局参数更新事件，使用Vue根实例作为事件总线
+            gpInstance.$root.$emit('global-parameters-updated', { 
+              groupId: key, 
+              parameters: gpInstance.globalParameters 
             })
           })
           this.visible = false;

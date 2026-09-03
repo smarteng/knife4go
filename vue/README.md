@@ -1,4 +1,3 @@
-# vue3模版
 #### 安装
 ```
 yarn install

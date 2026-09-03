@@ -1,6 +1,9 @@
 /* eslint no-useless-escape:0 */
-import md5 from 'js-md5'
+import md5Hex from 'crypto-js/md5'
 import JSON5 from './json5.js'
+
+const md5 = (message) => md5Hex(message).toString()
+
 import isObject from 'lodash/isObject'
 import isNumber from 'lodash/isNumber'
 

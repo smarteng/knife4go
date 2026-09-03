@@ -537,6 +537,7 @@ const langOptions = {
     fileNotEmpty:' 文件不能为空'
   },
   script: {
+    title: '脚本',
     JSExample: 'JS模板示例',
     TSExample: 'TS模板示例',
   }

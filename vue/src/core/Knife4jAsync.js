@@ -33,7 +33,7 @@
  *
  */
 import { message } from 'ant-design-vue';
-import md5 from 'js-md5';
+import md5Hex from 'crypto-js/md5';
 import KUtils from './utils';
 import { marked } from 'marked';
 import async from 'async';
@@ -49,6 +49,8 @@ import isUndefined from 'lodash/isUndefined';
 // import xml2js from 'xml2js';
 import DebugAxios from 'axios';
 import { useGlobalsStore } from '@/store/modules/global.js'
+
+const md5 = (msg) => md5Hex(msg).toString()
 
 marked.setOptions({
   gfm: true,
