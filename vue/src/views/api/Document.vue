@@ -97,6 +97,13 @@
     <div v-if="api.multipartResponseSchema">
       <a-tabs @change="multipartTabCodeChanges">
         <a-tab-pane v-for="resp in multipCodeDatas" :key="resp.code" :tab="resp.code">
+          <!--判断响应头-->
+          <div v-if="resp.responseHeaderParameters">
+              <!-- 响应Header -->
+            <a-table :defaultExpandAllRows="expanRows" :columns="responseHeaderColumns"
+              :dataSource="resp.responseHeaderParameters" rowKey="id" size="small" :pagination="page">
+            </a-table>
+          </div>
           <!--响应参数-->
           <!-- 响应参数 -->
           <div class="api-title" v-html="$t('doc.responseParams')"></div>
@@ -119,6 +126,14 @@
       </a-tabs>
     </div>
     <div v-else>
+      <!--判断响应头-->
+      <div v-if="api.responseHeaderParameters">
+          <!-- 响应Header -->
+        <div class="api-title" v-html="$t('doc.responseHeaderParams')"></div>
+        <a-table :defaultExpandAllRows="expanRows" :columns="responseHeaderColumns"
+          :dataSource="api.responseHeaderParameters" rowKey="id" size="small" :pagination="page">
+        </a-table>
+      </div>
       <!--响应参数-->
         <!--  响应参数 -->
       <div class="api-title" v-html="$t('doc.responseParams')"></div>
@@ -218,6 +233,7 @@
      };
    },
    created() {
+     var that = this;
      // console.log("Document")
      // console.log(this.api);
      var key = Constants.globalTreeTableModelParams + this.swaggerInstance.id;
@@ -226,23 +242,12 @@
      this.initI18n();
      this.initRequestParams();
      this.initResponseCodeParams();
-     // 用于保存已创建的 ClipboardJS 实例，供组件销毁时统一释放
-     this.$_clipboards = [];
-   },
-   mounted() {
-     // DOM 挂载后再绑定 clipboard，避免 setTimeout(1500) 硬等导致的时序不可靠
-     this.$nextTick(() => {
-       this.copyApiAddress();
-       this.copyApiMarkdown();
-       this.copyApiUrl();
-     });
-   },
-   beforeUnmount() {
-     // 释放 ClipboardJS 实例，防止内存泄漏
-     if (Array.isArray(this.$_clipboards)) {
-       this.$_clipboards.forEach(c => c && c.destroy && c.destroy());
-       this.$_clipboards = [];
-     }
+     setTimeout(() => {
+       that.copyApiAddress();
+       that.copyApiMarkdown();
+       that.copyApiUrl();
+       // console.log("status", this.responseCodeDisplayStatus)
+     }, 1500);
    },
    watch: {
      language: function (val, oldval) {
@@ -264,10 +269,8 @@
      copyApiUrl() {
        var that = this;
        var btnId = "btnCopyMethod" + this.api.id;
-       var el = document.getElementById(btnId);
-       if (!el) return;
        var copyMethodText = this.api.showUrl;
-       var clipboard = new ClipboardJS(el, {
+       var clipboard = new ClipboardJS("#" + btnId, {
          text() {
            return copyMethodText;
          }
@@ -286,14 +289,11 @@
          var failMessage = inst.message.copy.method.fail;
          message.info(failMessage);
        });
-       this.$_clipboards.push(clipboard);
      },
      copyApiAddress() {
        var that = this;
        var btnId = "btnCopyAddress" + this.api.id;
-       var el = document.getElementById(btnId);
-       if (!el) return;
-       var clipboard = new ClipboardJS(el, {
+       var clipboard = new ClipboardJS("#" + btnId, {
          text() {
            return window.location.href;
          }
@@ -312,13 +312,10 @@
          var failMessage = inst.message.copy.url.fail;
          message.info(failMessage);
        });
-       this.$_clipboards.push(clipboard);
      },
      copyApiMarkdown() {
        var that = this;
        var btnId = "btnCopyMarkdown" + this.api.id;
-       var el = document.getElementById(btnId);
-       if (!el) return;
        var api = {
          ...that.api,
          reqParameters: that.reqParameters,
@@ -326,7 +323,7 @@
          multipData: that.multipData
        };
        // console.log(api);
-       var clipboard = new ClipboardJS(el, {
+       var clipboard = new ClipboardJS("#" + btnId, {
          text() {
            var inst = that.getCurrentI18nInstance();
            if (inst.lang === 'zh') {
@@ -348,7 +345,6 @@
          var failMessage = inst.message.copy.document.fail;
          message.info(failMessage);
        });
-       this.$_clipboards.push(clipboard);
      },
      /**
       * 递归剔除请求参数表格忽略字段
