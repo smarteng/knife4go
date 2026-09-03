@@ -11,11 +11,11 @@
           </span>
         </a-col>
           <!-- 复制接口 -->
-        <a-col :flex="2" :id="'btnCopyMethod' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyMethod')"></a-col>
+        <a-col :flex="2" :id="'btnCopyMethod' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyMethod')" @click="onCopyMethodClick"></a-col>
           <!-- 复制文档 -->
-        <a-col :flex="2" :id="'btnCopyMarkdown' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copy')"></a-col>
+        <a-col :flex="2" :id="'btnCopyMarkdown' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copy')" @click="onCopyMarkdownClick"></a-col>
           <!-- 复制地址 -->
-        <a-col :flex="2" :id="'btnCopyAddress' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyHash')"></a-col>
+        <a-col :flex="2" :id="'btnCopyAddress' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyHash')" @click="onCopyAddressClick"></a-col>
       </a-row>
       <a-row :class="'knife4j-api-' + api.methodType.toLowerCase()">
         <div class="knife4j-api-summary">
@@ -77,6 +77,10 @@
         <template v-else-if="column.dataIndex === 'type'">
           <data-type :text="record.type" :record="record"></data-type>
         </template>
+        <template v-else-if="column.dataIndex === 'schemaValue'">
+          <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+          <span v-else>{{ record.schemaValue }}</span>
+        </template>
       </template>
     </a-table>
     <div v-if="responseCodeDisplayStatus">
@@ -84,12 +88,14 @@
       <div class="api-title" v-html="$t('doc.response')"></div>
       <a-table :defaultExpandAllRows="expanRows" :columns="responseStatuscolumns" :dataSource="api.responseCodes"
         rowKey="code" size="small" :pagination="page">
-        <template slot="descriptionTemplate" slot-scope="text">
-          <div v-html="text"></div>
-        </template>
-        <template slot="schemaTemplate" slot-scope="text,record">
-          <span v-if="text != null" v-html="text"></span>
-          <span v-else-if="record.schemaTitle != null" v-html="record.schemaTitle"></span>
+        <template #bodyCell="{ column, record, text }">
+          <template v-if="column.dataIndex === 'description'">
+            <div v-html="text"></div>
+          </template>
+          <template v-else-if="column.dataIndex === 'schema'">
+            <span v-if="text != null" v-html="text"></span>
+            <span v-else-if="record.schemaTitle != null" v-html="record.schemaTitle"></span>
+          </template>
         </template>
       </a-table>
     </div>
@@ -109,8 +115,14 @@
           <div class="api-title" v-html="$t('doc.responseParams')"></div>
           <a-table :defaultExpandAllRows="expanRows" :columns="responseParametersColumns" :dataSource="resp.data"
             rowKey="id" size="small" :pagination="page">
-            <template slot="descriptionTemplate" slot-scope="text">
-              <span v-html="text"></span>
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'description'">
+                <span v-html="record.description"></span>
+              </template>
+              <template v-else-if="column.dataIndex === 'schemaValue'">
+                <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+                <span v-else>{{ record.schemaValue }}</span>
+              </template>
             </template>
           </a-table>
             <!-- 响应示例 -->
@@ -139,8 +151,14 @@
       <div class="api-title" v-html="$t('doc.responseParams')"></div>
        <a-table :defaultExpandAllRows="expanRows" :columns="responseParametersColumns" :dataSource="multipData.data"
          rowKey="id" size="small" :pagination="page">
-         <template slot="descriptionTemplate" slot-scope="text">
-           <span v-html="text"></span>
+         <template #bodyCell="{ column, record }">
+           <template v-if="column.dataIndex === 'description'">
+             <span v-html="record.description"></span>
+           </template>
+           <template v-else-if="column.dataIndex === 'schemaValue'">
+             <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+             <span v-else>{{ record.schemaValue }}</span>
+           </template>
          </template>
        </a-table>
        <div class="api-title" v-html="$t('doc.responseExample')">
@@ -242,12 +260,23 @@
      this.initI18n();
      this.initRequestParams();
      this.initResponseCodeParams();
-     setTimeout(() => {
-       that.copyApiAddress();
-       that.copyApiMarkdown();
-       that.copyApiUrl();
-       // console.log("status", this.responseCodeDisplayStatus)
-     }, 1500);
+     // 保存已创建的 ClipboardJS 实例，供组件销毁时释放
+     this.$_clipboards = [];
+   },
+   mounted() {
+     // DOM 挂载完成后再绑定 ClipboardJS，避免 setTimeout 硬等导致的时序不可靠
+     this.$nextTick(() => {
+       this.copyApiAddress();
+       this.copyApiMarkdown();
+       this.copyApiUrl();
+     });
+   },
+   beforeUnmount() {
+     // 释放 ClipboardJS 实例，防止内存泄漏
+     if (Array.isArray(this.$_clipboards)) {
+       this.$_clipboards.forEach(c => c && c.destroy && c.destroy());
+       this.$_clipboards = [];
+     }
    },
    watch: {
      language: function (val, oldval) {
@@ -266,11 +295,37 @@
        this.responseHeaderColumns = inst.table.documentResponseHeaderColumns;
        this.responseParametersColumns = inst.table.documentResponseColumns;
      },
+     // hasModel 判断当前 record 的 schemaValue 是否指向一个已解析的 Model,
+     // 只有存在对应 Model 时才把 schema 列渲染成可点击的跳转链接。
+     hasModel(record) {
+       if (!record || !record.schema || !record.schemaValue) {
+         return false;
+       }
+       var key = Constants.globalTreeTableModelParams + this.swaggerInstance.id;
+       return this.knife4jModels.exists(key, record.schemaValue);
+     },
+     // gotoModel 跳转到 SwaggerModels 页面, 通过 query.model 指定要定位的 Model 名称。
+     // SwaggerModels 组件本身监听 $route 变化, 每次都会重新定位到目标 Model。
+     gotoModel(modelName) {
+       if (!modelName) {
+         return;
+       }
+       var groupName = this.swaggerInstance && this.swaggerInstance.name;
+       if (!groupName) {
+         return;
+       }
+       this.$router.push({
+         path: '/SwaggerModels/' + groupName,
+         query: { model: modelName }
+       }).catch(function () { /* 忽略重复导航异常 */ });
+     },
      copyApiUrl() {
        var that = this;
        var btnId = "btnCopyMethod" + this.api.id;
+       var el = document.getElementById(btnId);
+       if (!el) return;
        var copyMethodText = this.api.showUrl;
-       var clipboard = new ClipboardJS("#" + btnId, {
+       var clipboard = new ClipboardJS(el, {
          text() {
            return copyMethodText;
          }
@@ -281,6 +336,7 @@
          // "复制地址成功"
          var successMessage = inst.message.copy.method.success;
          message.info(successMessage);
+         that.$_lastCopyAt = Date.now();
        })
        clipboard.on("error", function (e) {
          var inst = that.getCurrentI18nInstance();
@@ -288,34 +344,42 @@
          // "复制地址失败"
          var failMessage = inst.message.copy.method.fail;
          message.info(failMessage);
+         that.$_lastCopyAt = Date.now();
        });
+       this.$_clipboards.push(clipboard);
      },
      copyApiAddress() {
        var that = this;
        var btnId = "btnCopyAddress" + this.api.id;
-       var clipboard = new ClipboardJS("#" + btnId, {
+       var el = document.getElementById(btnId);
+       if (!el) return;
+       var clipboard = new ClipboardJS(el, {
          text() {
            return window.location.href;
          }
        });
-
 
        clipboard.on("success", function (e) {
          var inst = that.getCurrentI18nInstance();
          // "复制地址成功"
          var successMessage = inst.message.copy.url.success;
          message.info(successMessage);
+         that.$_lastCopyAt = Date.now();
        });
        clipboard.on("error", function (e) {
          var inst = that.getCurrentI18nInstance();
          // "复制地址失败"
          var failMessage = inst.message.copy.url.fail;
          message.info(failMessage);
+         that.$_lastCopyAt = Date.now();
        });
+       this.$_clipboards.push(clipboard);
      },
      copyApiMarkdown() {
        var that = this;
        var btnId = "btnCopyMarkdown" + this.api.id;
+       var el = document.getElementById(btnId);
+       if (!el) return;
        var api = {
          ...that.api,
          reqParameters: that.reqParameters,
@@ -323,7 +387,7 @@
          multipData: that.multipData
        };
        // console.log(api);
-       var clipboard = new ClipboardJS("#" + btnId, {
+       var clipboard = new ClipboardJS(el, {
          text() {
            var inst = that.getCurrentI18nInstance();
            if (inst.lang === 'zh') {
@@ -338,13 +402,80 @@
          // "复制文档成功"
          var successMessage = inst.message.copy.document.success;
          message.info(successMessage);
+         that.$_lastCopyAt = Date.now();
        });
        clipboard.on("error", function (e) {
          var inst = that.getCurrentI18nInstance();
          // "复制文档失败"
          var failMessage = inst.message.copy.document.fail;
          message.info(failMessage);
+         that.$_lastCopyAt = Date.now();
        });
+       this.$_clipboards.push(clipboard);
+     },
+     // 兑底降级：优先用 navigator.clipboard.writeText（现代浏览器、https/localhost 可用），
+     // 失败后回退 document.execCommand('copy')，确保无论 ClipboardJS 绑定是否生效都能提示用户。
+     // 同一次点击内 ClipboardJS 已弹提示时不重复弹。
+     copyTextFallback(text, type) {
+       var that = this;
+       // 同一事件循环内 ClipboardJS 已弹过提示，则不重复弹（简单的时间戳去重）
+       if (that.$_lastCopyAt && (Date.now() - that.$_lastCopyAt) < 300) {
+         return;
+       }
+       var inst = that.getCurrentI18nInstance();
+       var successMessage = inst.message.copy[type].success;
+       var failMessage = inst.message.copy[type].fail;
+       var onOk = function () { message.info(successMessage); };
+       var onFail = function () { message.info(failMessage); };
+       if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+         navigator.clipboard.writeText(text).then(onOk).catch(function () {
+           that.execCommandCopy(text) ? onOk() : onFail();
+         });
+         return;
+       }
+       that.execCommandCopy(text) ? onOk() : onFail();
+     },
+     // 使用 document.execCommand('copy') 兼容不支持 Async Clipboard API 的环境
+     execCommandCopy(text) {
+       try {
+         var ta = document.createElement('textarea');
+         ta.value = text == null ? '' : String(text);
+         ta.style.position = 'fixed';
+         ta.style.left = '-9999px';
+         ta.style.top = '0';
+         ta.setAttribute('readonly', '');
+         document.body.appendChild(ta);
+         ta.select();
+         var ok = document.execCommand('copy');
+         document.body.removeChild(ta);
+         return ok;
+       } catch (err) {
+         console.error('execCommandCopy error:', err);
+         return false;
+       }
+     },
+     // 当 ClipboardJS 绑定失效时，直接点击的兑底入口
+     onCopyMethodClick() {
+       this.copyTextFallback(this.api.showUrl, 'method');
+     },
+     onCopyAddressClick() {
+       this.copyTextFallback(window.location.href, 'url');
+     },
+     onCopyMarkdownClick() {
+       var api = {
+         ...this.api,
+         reqParameters: this.reqParameters,
+         multipCodeDatas: this.multipCodeDatas,
+         multipData: this.multipData
+       };
+       var inst = this.getCurrentI18nInstance();
+       var text = '';
+       if (inst.lang === 'zh') {
+         text = markdownSingleText(api);
+       } else if (inst.lang === 'us') {
+         text = markdownSingleTextUs(api);
+       }
+       this.copyTextFallback(text, 'document');
      },
      /**
       * 递归剔除请求参数表格忽略字段
