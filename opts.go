@@ -6,6 +6,10 @@ type Config struct {
 	docPath     string
 	apiDocsPath string
 	verbose     bool
+	// template 前端模板名, 空串代表使用默认模板 ("ui")。
+	// 可选值: "ui" (Vue2 旧版) / "vue" (Vue3 新版)；
+	// 名称不在 templateRegistry 中时, RegisterOpenAPI 返回错误。
+	template string
 
 	// beforeStaticAssets 是可选的钩子，在批量注册 40 条静态资源前调用；
 	// 返回一个用于收尾的清理函数（如恢复现场），在批量注册完成后立即执行。
@@ -52,5 +56,14 @@ func APIDocsPath(path string) Opts {
 func Verbose(v bool) Opts {
 	return func(c *Config) {
 		c.verbose = v
+	}
+}
+
+// Template 选择 knife4go 使用的前端模板。内置可选值: "ui" (Vue2 旧版) / "vue" (Vue3 新版)。
+// 传入未登记的名称时, RegisterOpenAPI 返回包含可用名称列表的错误。
+// 不调用时默认使用 "ui" 以保持向后兼容。
+func Template(name string) Opts {
+	return func(c *Config) {
+		c.template = name
 	}
 }

@@ -64,7 +64,8 @@ const langOptions = {
       {
         title: 'schema',
         dataIndex: 'schemaValue',
-        width: '15%'
+        width: '15%',
+        scopedSlots: { customRender: 'schemaValueTemplate' }
       }
     ],
     //文档说明-响应状态
@@ -123,7 +124,8 @@ const langOptions = {
       {
         title: 'schema',
         dataIndex: 'schemaValue',
-        width: '15%'
+        width: '15%',
+        scopedSlots: { customRender: 'schemaValueTemplate' }
       }
     ],
     //调试-请求头参数

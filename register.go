@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path"
 	"strings"
-
-	"github.com/smarteng/knife4go/ui"
 )
 
 // Router 是 knife4go 注册静态 GET 路由所需的最小框架无关接口。
@@ -92,6 +90,7 @@ func buildSwaggerConfigJSON(apiDocsPath, uiPrefix string) []byte {
 
 // RegisterOpenAPI 将 knife4go 的 UI 页面、OpenAPI 文档端点与全部静态资产注册到 router。
 // 文档必须经 Doc() 提供，否则返回错误；文档内容始终原样注册，不做任何改写。
+// 前端模板可通过 Template(name) 选择, 默认使用 "ui" (Vue2 版)。
 func RegisterOpenAPI(router Router, opts ...Opts) error {
 	config := Config{}
 	for _, opt := range opts {
@@ -101,31 +100,38 @@ func RegisterOpenAPI(router Router, opts ...Opts) error {
 		return errNoDocument
 	}
 
+	// 0) 解析前端模板。传入未知名称时提前报错, 避免静默回退到默认屏蔽用户拼写错误。
+	provider, err := resolveTemplate(config.template)
+	if err != nil {
+		return err
+	}
+	docHTML := provider.docHtml()
+
 	// 1) 解析所有路径（UI 页面 + 文档 JSON + uiPrefix）。
-	docPath := normalizeAbsPath(config.docPath, ui.DocHtmlRelativePath)
+	docPath := normalizeAbsPath(config.docPath, provider.docHtmlRelativePath())
 	uiPrefix := uiPrefixOf(docPath)
 	apiDocsPath := withPrefix(uiPrefix, normalizeAbsPath(config.apiDocsPath, defaultAPIDocsPath))
 
 	// 2) 动态路由（保留框架路由日志，方便用户确认注册位置）。
-	router.GET(docPath, ui.DocHtml.ContentType, ui.DocHtml.Content)
+	router.GET(docPath, docHTML.ContentType, docHTML.Content)
 	router.GET(apiDocsPath, jsonContentType, []byte(config.docJson))
 
-	// 3) 静态路由（swagger-config + 40 条 UI 静态资产）。适配器可通过 beforeStaticAssets
+	// 3) 静态路由（swagger-config + UI 静态资产）。适配器可通过 beforeStaticAssets
 	//    钩子在此段前后插入横切逻辑（如临时抑制框架路由日志）。
-	registerStaticRoutes(router, uiPrefix, buildSwaggerConfigJSON(apiDocsPath, uiPrefix), config.beforeStaticAssets)
+	registerStaticRoutes(router, uiPrefix, buildSwaggerConfigJSON(apiDocsPath, uiPrefix), provider.allAssets(), config.beforeStaticAssets)
 	return nil
 }
 
 // registerStaticRoutes 集中注册"静默范围"内的路由：swagger-config 端点与全部 UI 静态资产。
 // 若 beforeHook 非 nil，则在开始注册前调用一次，其返回的 cleanup 会在全部注册完成后立即执行。
-func registerStaticRoutes(router Router, uiPrefix string, swaggerConfig []byte, beforeHook func() (cleanup func())) {
+func registerStaticRoutes(router Router, uiPrefix string, swaggerConfig []byte, assets []asset, beforeHook func() (cleanup func())) {
 	var cleanup func()
 	if beforeHook != nil {
 		cleanup = beforeHook()
 	}
 	router.GET(withPrefix(uiPrefix, swaggerConfigEndpoint), jsonContentType, swaggerConfig)
-	for _, asset := range ui.AllAssets() {
-		router.GET(withPrefix(uiPrefix, asset.Path), asset.ContentType, asset.Content)
+	for _, a := range assets {
+		router.GET(withPrefix(uiPrefix, a.Path), a.ContentType, a.Content)
 	}
 	if cleanup != nil {
 		cleanup()

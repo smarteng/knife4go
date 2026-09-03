@@ -77,6 +77,10 @@
         <template v-else-if="column.dataIndex === 'type'">
           <data-type :text="record.type" :record="record"></data-type>
         </template>
+        <template v-else-if="column.dataIndex === 'schemaValue'">
+          <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+          <span v-else>{{ record.schemaValue }}</span>
+        </template>
       </template>
     </a-table>
     <div v-if="responseCodeDisplayStatus">
@@ -112,6 +116,12 @@
             <template slot="descriptionTemplate" slot-scope="text">
               <span v-html="text"></span>
             </template>
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'schemaValue'">
+                <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+                <span v-else>{{ record.schemaValue }}</span>
+              </template>
+            </template>
           </a-table>
             <!-- 响应示例 -->
           <div class="api-title" v-html="$t('doc.responseExample')"></div>
@@ -142,6 +152,12 @@
          <template slot="descriptionTemplate" slot-scope="text">
            <span v-html="text"></span>
          </template>
+         <template #bodyCell="{ column, record }">
+           <template v-if="column.dataIndex === 'schemaValue'">
+             <a v-if="hasModel(record)" href="javascript:void(0);" @click="gotoModel(record.schemaValue)">{{ record.schemaValue }}</a>
+             <span v-else>{{ record.schemaValue }}</span>
+           </template>
+         </template>
        </a-table>
        <div class="api-title" v-html="$t('doc.responseExample')">
        </div>
@@ -171,6 +187,7 @@
  import cloneDeep from 'lodash/cloneDeep'
  import { VAceEditor } from 'vue3-ace-editor'
  import { computed, defineAsyncComponent } from 'vue'
+ import { useRouter } from 'vue-router'
  import { useGlobalsStore } from '@/store/modules/global.js'
  import { useknife4jModels } from '@/store/knife4jModels.js'
  import { useI18n } from 'vue-i18n'
@@ -207,12 +224,17 @@
 
      const knife4jModels = useknife4jModels()
      const { messages } = useI18n()
+     // 引入 vue-router 4 的 useRouter, 用于 schema 链接跳转。
+     // knife4j vue 项目采用 setup() + methods 混合写法, methods 中无法直接 useRouter,
+     // 因此在 setup 中获取并作为反向属性 return 出去, methods 内部通过 this.router 访问。
+     const router = useRouter()
      return {
        language,
        swagger,
        responseCodeDisplayStatus,
        knife4jModels,
-       messages
+       messages,
+       router
      }
    },
    data() {
@@ -265,6 +287,31 @@
        this.responseStatuscolumns = inst.table.documentResponseStatusColumns;
        this.responseHeaderColumns = inst.table.documentResponseHeaderColumns;
        this.responseParametersColumns = inst.table.documentResponseColumns;
+     },
+     // hasModel 判断当前参数 record 的 schemaValue 是否指向一个已解析的 Model,
+     // 仅当存在于 knife4jModels 中时才渲染为可跳转链接, 避免对基本类型(string/int 等)套 <a>。
+     hasModel(record) {
+       if (!record || !record.schema || !record.schemaValue) {
+         return false;
+       }
+       var key = Constants.globalTreeTableModelParams + this.swaggerInstance.id;
+       return this.knife4jModels.exists(key, record.schemaValue);
+     },
+     // gotoModel 跳转到 SwaggerModels 页面, 通过 query.model 指定要定位的 Model 名称。
+     // knife4j 采用 tab 页签架构, SwaggerModels 组件会被 tab 系统激活或新建;
+     // SwaggerModels 组件本身监听 $route 变化, 每次都会重新定位到目标 Model。
+     gotoModel(modelName) {
+       if (!modelName) {
+         return;
+       }
+       var groupName = this.swaggerInstance && this.swaggerInstance.name;
+       if (!groupName) {
+         return;
+       }
+       this.router.push({
+         path: '/SwaggerModels/' + groupName,
+         query: { model: modelName }
+       }).catch(function () { /* 忽略重复导航异常 */ });
      },
      copyApiUrl() {
        var that = this;
