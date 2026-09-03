@@ -693,9 +693,11 @@
 
 
 .knife4j-debug-request-content-type-raw {
-  //width: 360px;
-  //height: 35px;
-  //line-height: 35px;
+  // 与左侧 radio-group（35px 高）保持一致高度，避免水平对齐时基线不一致
+  height: 35px;
+  line-height: 35px;
+  display: flex;
+  align-items: center;
 }
 
 .knife4j-debug-request-content-type-beautify {
@@ -709,6 +711,12 @@
 
 .knife4j-debug-raw-span {
   cursor: pointer;
+  // 与左侧 radio 保持相同高度、并让文字与下拉箭头垂直居中，实现视觉水平对齐
+  height: 35px;
+  line-height: 35px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 

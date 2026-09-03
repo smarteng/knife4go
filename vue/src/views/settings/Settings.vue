@@ -116,7 +116,7 @@ export default {
   beforeCreate() {
     instance = this;
     message.config({
-      top: "100px"
+      top: 100
     });
   },
   created() {

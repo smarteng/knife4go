@@ -11,11 +11,17 @@
           </span>
         </a-col>
           <!-- 复制接口 -->
-        <a-col :flex="2" :id="'btnCopyMethod' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyMethod')" @click="onCopyMethodClick"></a-col>
+        <a-col :flex="2" class="knife4j-api-copy-address">
+          <span :id="'btnCopyMethod' + api.id" style="cursor:pointer;display:inline-block;width:100%;height:100%;" v-html="$t('doc.copyMethod')" @click="onCopyMethodClick"></span>
+        </a-col>
           <!-- 复制文档 -->
-        <a-col :flex="2" :id="'btnCopyMarkdown' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copy')" @click="onCopyMarkdownClick"></a-col>
+        <a-col :flex="2" class="knife4j-api-copy-address">
+          <span :id="'btnCopyMarkdown' + api.id" style="cursor:pointer;display:inline-block;width:100%;height:100%;" v-html="$t('doc.copy')" @click="onCopyMarkdownClick"></span>
+        </a-col>
           <!-- 复制地址 -->
-        <a-col :flex="2" :id="'btnCopyAddress' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyHash')" @click="onCopyAddressClick"></a-col>
+        <a-col :flex="2" class="knife4j-api-copy-address">
+          <span :id="'btnCopyAddress' + api.id" style="cursor:pointer;display:inline-block;width:100%;height:100%;" v-html="$t('doc.copyHash')" @click="onCopyAddressClick"></span>
+        </a-col>
       </a-row>
       <a-row :class="'knife4j-api-' + api.methodType.toLowerCase()">
         <div class="knife4j-api-summary">
@@ -264,10 +270,11 @@
      this.$_clipboards = [];
    },
    mounted() {
-     // 配置 ant-design-vue message 的位置与去重策略：
+     // 配置 ant-design-vue message 的位置、时长与去重策略：
      // - top: 80  距顶部 80px（ant-design-vue 要求 number 类型，单位 px；不能传 '80px' 字符串）
+     // - duration: 1.5  提示 1.5 秒后自动消失（默认 3 秒），体感更轻快
      // - maxCount: 1  同一时刻最多只显示 1 条 message，避免同一次点击叠出多条相同提示
-     message.config({ top: 80, maxCount: 1 });
+     message.config({ top: 80, duration: 1.5, maxCount: 1 });
      // DOM 挂载完成后再绑定 ClipboardJS，避免 setTimeout 硬等导致的时序不可靠
      this.$nextTick(() => {
        this.copyApiAddress();
