@@ -675,12 +675,14 @@
   margin-top: 0;
   display: flex;
   align-items: center;
+  min-height: 35px;
 }
 
 .knife4j-debug-request-content-type {
-  // 让 radio-group 内容自适应，避免因固定宽度不足导致 radio 文本换行/挤压
-  height: 35px;
-  line-height: 35px;
+  // 用 flex 让内部 a-radio 之间纵向居中；不要强制 line-height，
+  // 否则 antdv 3.x 的 <a-radio> 圆圈会相对文字上移，出现"圆圈偏上、文字偏下"
+  display: flex;
+  align-items: center;
   white-space: nowrap;
 }
 
@@ -693,9 +695,7 @@
 
 
 .knife4j-debug-request-content-type-raw {
-  // 与左侧 radio-group（35px 高）保持一致高度，避免水平对齐时基线不一致
-  height: 35px;
-  line-height: 35px;
+  // 用 flex 与左侧 radio-group 视觉基线对齐
   display: flex;
   align-items: center;
 }
@@ -711,9 +711,7 @@
 
 .knife4j-debug-raw-span {
   cursor: pointer;
-  // 与左侧 radio 保持相同高度、并让文字与下拉箭头垂直居中，实现视觉水平对齐
-  height: 35px;
-  line-height: 35px;
+  // 与左侧 radio 内文字视觉基线对齐（内部 flex 居中，让文字与下拉箭头垂直中心一致）
   display: inline-flex;
   align-items: center;
   gap: 4px;
