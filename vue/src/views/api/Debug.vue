@@ -271,6 +271,7 @@
 import qs from "qs"
 import KUtils from "@/core/utils";
 import KEnvironment from "@/core/Environment"
+import eventBus from "@/core/eventBus";
 import constant from "@/store/constants";
 /* import EditorDebugShow from "./EditorDebugShow";
 import DebugResponse from "./DebugResponse"; */
@@ -445,11 +446,12 @@ export default {
       this.debugUrlStyle = "width: 80%;"
     }
     // 监听全局参数更新事件
-    this.$root.$on('global-parameters-updated', this.handleGlobalParametersUpdate);
+    // Vue 3 移除了 $root.$on/$off, 改用 eventBus (等价 mitt 语义)。
+    eventBus.on('global-parameters-updated', this.handleGlobalParametersUpdate);
   },
   beforeUnmount() {
     // 组件销毁前移除事件监听
-    this.$root.$off('global-parameters-updated', this.handleGlobalParametersUpdate);
+    eventBus.off('global-parameters-updated', this.handleGlobalParametersUpdate);
   },
   watch: {
     language: function (val, oldval) {

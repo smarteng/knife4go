@@ -15,12 +15,26 @@
 <script>
 import { VAceEditor } from 'vue3-ace-editor'
 import ace from "ace-builds";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/mode-xml";
-import "ace-builds/src-noconflict/mode-text";
-import "ace-builds/src-noconflict/mode-javascript";
-import "ace-builds/src-noconflict/theme-eclipse";
-import "ace-builds/src-noconflict/ext-language_tools";
+// Vite 环境下 vue3-ace-editor 不使用 window.ace 全局实例,
+// 必须用 ?url 拿到构建后 module 文件的 URL, 通过 ace.config.setModuleUrl 显式注册,
+// 否则 ace 内部 require("ace/mode/xxx") 返回 undefined, 访问 .Mode 时崩溃
+// (堆栈: ext-language_tools -> Cannot read properties of undefined (reading 'Mode'))。
+// 与 EditorShow.vue / EditorScript.vue / OpenApi.vue 保持一致的注册模式。
+// Debug 面板会用到 json / xml / text / javascript 四种 mode, 需分别注册。
+import modeJson from "ace-builds/src-noconflict/mode-json?url";
+import modeXml from "ace-builds/src-noconflict/mode-xml?url";
+import modeText from "ace-builds/src-noconflict/mode-text?url";
+import modeJavascript from "ace-builds/src-noconflict/mode-javascript?url";
+import themeEclipse from "ace-builds/src-noconflict/theme-eclipse?url";
+import extLanguageTools from "ace-builds/src-noconflict/ext-language_tools?url";
+
+ace.config.setModuleUrl('ace/mode/json', modeJson)
+ace.config.setModuleUrl('ace/mode/xml', modeXml)
+ace.config.setModuleUrl('ace/mode/text', modeText)
+ace.config.setModuleUrl('ace/mode/javascript', modeJavascript)
+ace.config.setModuleUrl('ace/theme/eclipse', themeEclipse)
+ace.config.setModuleUrl('ace/ext/language_tools', extLanguageTools)
+
 import { ref, watch } from 'vue'
 export default {
   name: "EditorShow",
