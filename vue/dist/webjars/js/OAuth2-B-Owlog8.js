@@ -1,0 +1,1 @@
+import{_ as t}from"./doc-CZbAG-sY.js";import"./vendor-vue-CvwNvF3N.js";import"./vendor-antd-CNXQhKic.js";import"./vendor-mermaid-jmzfwviv.js";import"./vendor-utils-COUvLymv.js";import"./vendor-editor-Cs510B7U.js";const r={name:"OAuth2"};function o(p,e,n,s,c,i){return null}const $=t(r,[["render",o]]);export{$ as default};
