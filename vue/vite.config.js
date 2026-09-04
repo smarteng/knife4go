@@ -72,6 +72,24 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       input: 'doc.html',
+      // 静默 ant-design-vue 3.x 内部 _vueuse 模块产生的 /* #__PURE__ */ 注释位置告警。
+      // 该告警源于第三方库源码（node_modules/ant-design-vue/es/_util/hooks/_vueuse/*.js），
+      // Rollup 5+ 对 pure 注释位置检查更严格，会自动移除位置不合法的注释以避免副作用，
+      // 不影响构建结果和运行时行为。ant-design-vue 3.x 已停止维护，官方不会再修复；
+      // 因此在此处按已知模式过滤，避免每次构建刷屏几十条噪音。
+      // 其他 Rollup 告警仍会正常输出，以便发现真实问题。
+      onwarn(warning, defaultHandler) {
+        if (
+          warning.code === 'INVALID_ANNOTATION' &&
+          warning.message &&
+          warning.message.includes('/* #__PURE__ */') &&
+          warning.id &&
+          warning.id.includes('/ant-design-vue/es/_util/hooks/_vueuse/')
+        ) {
+          return
+        }
+        defaultHandler(warning)
+      },
       output: {
         chunkFileNames: 'webjars/js/[name]-[hash].js',
         entryFileNames: 'webjars/js/[name]-[hash].js',

@@ -26,12 +26,20 @@ module.exports = {
       ignored: /node_modules/
     },
     proxy: {
-      "/": {
-        //target: 'http://localhost:8990/',
-        target: 'http://localhost:17812',
-        /* target: 'http://knife4j.xiaominfo.com/', */
-        ws: true,
+      '/swagger': {
+        target: `http://localhost:14010`,
         changeOrigin: true
+      },
+      // knife4j 前端在开发环境（doc.html 位于站点根路径）会请求相对路径
+      // v3/api-docs/swagger-config，浏览器解析后打到 /v3/api-docs/swagger-config，
+      // 而后端 knife4go 实际把该端点注册在 /swagger/v3/api-docs/swagger-config（受
+      // uiPrefix 影响）。因此代理时补上 /swagger 前缀，让开发环境请求能正确落到后端。
+      // 生产环境后端 docPath 通常为 /swagger/index.html，浏览器会自动加上 /swagger
+      // 前缀，不再走此规则，故本规则仅对开发环境生效。
+      '/v3/api-docs': {
+        target: `http://localhost:14010`,
+        changeOrigin: true,
+        rewrite: (p) => '/swagger' + p
       }
     }
   },
