@@ -5,8 +5,13 @@ import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import viteCompression from 'vite-plugin-compression';
 import removeConsole from 'vite-plugin-remove-console';
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+
+// package.json 设置 "type": "module" 后 __dirname 在 ESM 下不再存在，
+// 用 import.meta.url 手工推导等价值，供下方 resolve(__dirname, 'src') 使用。
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -43,10 +48,22 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
+      // 后端 knife4go 将 API 文档 JSON 端点注册在 /swagger/doc.json，
+      // /swagger 前缀的请求原样透传到后端，不做 rewrite。
       '/swagger': {
         target: `http://localhost:14010`,
+        changeOrigin: true
+      },
+      // knife4j 前端在开发环境（doc.html 位于站点根路径）会请求相对路径
+      // v3/api-docs/swagger-config，浏览器解析后打到 /v3/api-docs/swagger-config，
+      // 而后端 knife4go 实际把该端点注册在 /swagger/v3/api-docs/swagger-config（受
+      // uiPrefix 影响）。因此代理时补上 /swagger 前缀，让开发环境请求能正确落到后端。
+      // 生产环境后端 docPath 通常为 /swagger/index.html，浏览器会自动加上 /swagger
+      // 前缀，不再走此规则，故本规则仅对开发环境生效。
+      '/v3/api-docs': {
+        target: `http://localhost:14010`,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/swagger/, '')
+        rewrite: (p) => '/swagger' + p
       }
     }
   },
