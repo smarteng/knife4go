@@ -43,10 +43,10 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      '/api': {
-        target: `http://localhost:8990`,
+      '/swagger': {
+        target: `http://localhost:14010`,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/swagger/, '')
       }
     }
   },

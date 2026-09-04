@@ -461,8 +461,6 @@ export default {
           // 关闭
           that.kloading.destroy();
         }, 1000);
-        /* var message=this.getCurrentI18nInstance().message.offline.imple;
-        this.$message.info(message); */
       })
     },
     triggerDownloadMarkdown() {

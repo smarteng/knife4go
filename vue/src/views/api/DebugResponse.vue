@@ -81,6 +81,7 @@ import { computed, defineAsyncComponent } from 'vue'
 import { useGlobalsStore } from '@/store/modules/global.js'
 import { useI18n } from 'vue-i18n'
 import { CopyOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 /* import EditorDebugShow from "./EditorDebugShow"; */
 
 export default {
@@ -204,10 +205,10 @@ export default {
       // 复制Raw失败
       var failMessage = this.i18n.message.copy.raw.fail;
       clipboard.on("success", function (e) {
-        that.$message.info(successMessage);
+        message.info(successMessage);
       });
       clipboard.on("error", function (e) {
-        that.$message.info(failMessage);
+        message.info(failMessage);
       });
     },
     copyCurlText() {
@@ -224,10 +225,10 @@ export default {
       // 复制Raw失败
       var failMessage = this.i18n.message.copy.curl.fail;
       clipboard.on("success", function (e) {
-        that.$message.info(successMessage);
+        message.info(successMessage);
       });
       clipboard.on("error", function (e) {
-        that.$message.info(failMessage);
+        message.info(failMessage);
       });
     },
     resetResponseContent() {

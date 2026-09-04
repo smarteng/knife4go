@@ -42,3 +42,25 @@ export function findMenuByKey(key, menuData) {
   }
   return tmpComp;
 }
+
+/**
+ * 计算字符串显示宽度（中文/全角字符计 2，其余字符计 1）。
+ * 替代原先挂在 String.prototype 上的 gblen 猴子补丁，避免污染全局原型。
+ * @param {string} text 待计算字符串
+ * @returns {number} 显示宽度
+ */
+export function gblen(text) {
+  if (text == null) {
+    return 0;
+  }
+  var len = 0;
+  var str = String(text);
+  for (var i = 0; i < str.length; i++) {
+    if (str.charCodeAt(i) > 127 || str.charCodeAt(i) == 94) {
+      len += 2;
+    } else {
+      len++;
+    }
+  }
+  return len;
+}
