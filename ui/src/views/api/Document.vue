@@ -2,7 +2,7 @@
   <div class="document">
     <a-row>
       <a-row class="knife4j-api-title">
-        <a-col :span="18">
+        <a-col :span="15">
           <span v-if="api.deprecated" class="knife4j-menu-api-deprecated">
             {{ api.summary }}
           </span>
@@ -10,12 +10,20 @@
             {{ api.summary }}
           </span>
         </a-col>
-        <a-col :span="2" :id="'btnCopyMethod' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyMethod')">
-          复制接口</a-col>
-        <a-col :span="2" :id="'btnCopyMarkdown' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copy')">复制文档
+        <a-col :span="9" class="knife4j-api-copy-address">
+          <span :id="'btnCopyMethod' + api.id" class="knife4j-copy-btn">
+            <a-icon type="copy" />
+            <span v-html="$t('doc.copyMethod')">复制接口</span>
+          </span>
+          <span :id="'btnCopyMarkdown' + api.id" class="knife4j-copy-btn">
+            <a-icon type="copy" />
+            <span v-html="$t('doc.copy')">复制文档</span>
+          </span>
+          <span :id="'btnCopyAddress' + api.id" class="knife4j-copy-btn">
+            <a-icon type="copy" />
+            <span v-html="$t('doc.copyHash')">复制地址</span>
+          </span>
         </a-col>
-        <a-col :span="2" :id="'btnCopyAddress' + api.id" class="knife4j-api-copy-address" v-html="$t('doc.copyHash')">
-          复制地址</a-col>
       </a-row>
       <a-row :class="'knife4j-api-' + api.methodType.toLowerCase()">
         <div class="knife4j-api-summary">

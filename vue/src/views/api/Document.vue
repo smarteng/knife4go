@@ -2,7 +2,7 @@
   <div class="document">
     <div style="width: 100%">
       <a-row type="flex" class="knife4j-api-title">
-        <a-col :flex="18">
+        <a-col :flex="15">
           <span v-if="api.deprecated" class="knife4j-menu-api-deprecated">
             {{ api.summary }}
           </span>
@@ -10,17 +10,20 @@
             {{ api.summary }}
           </span>
         </a-col>
-          <!-- 复制接口 -->
-        <a-col :flex="2" class="knife4j-api-copy-address">
-          <span :id="'btnCopyMethod' + api.id" style="cursor:pointer;display:inline-block;width:100%;height:100%;" v-html="$t('doc.copyMethod')" @click="onCopyMethodClick"></span>
-        </a-col>
-          <!-- 复制文档 -->
-        <a-col :flex="2" class="knife4j-api-copy-address">
-          <span :id="'btnCopyMarkdown' + api.id" style="cursor:pointer;display:inline-block;width:100%;height:100%;" v-html="$t('doc.copy')" @click="onCopyMarkdownClick"></span>
-        </a-col>
-          <!-- 复制地址 -->
-        <a-col :flex="2" class="knife4j-api-copy-address">
-          <span :id="'btnCopyAddress' + api.id" style="cursor:pointer;display:inline-block;width:100%;height:100%;" v-html="$t('doc.copyHash')" @click="onCopyAddressClick"></span>
+        <!-- 复制接口 / 复制文档 / 复制地址：合并到同一列内并排展示，避免被栅格拉散 -->
+        <a-col :flex="9" class="knife4j-api-copy-address">
+          <span :id="'btnCopyMethod' + api.id" class="knife4j-copy-btn" @click="onCopyMethodClick">
+            <CopyOutlined />
+            <span>{{ $t('doc.copyMethod') }}</span>
+          </span>
+          <span :id="'btnCopyMarkdown' + api.id" class="knife4j-copy-btn" @click="onCopyMarkdownClick">
+            <CopyOutlined />
+            <span>{{ $t('doc.copy') }}</span>
+          </span>
+          <span :id="'btnCopyAddress' + api.id" class="knife4j-copy-btn" @click="onCopyAddressClick">
+            <CopyOutlined />
+            <span>{{ $t('doc.copyHash') }}</span>
+          </span>
         </a-col>
       </a-row>
       <a-row :class="'knife4j-api-' + api.methodType.toLowerCase()">
@@ -199,10 +202,12 @@
  import { useknife4jModels } from '@/store/knife4jModels.js'
  import { useI18n } from 'vue-i18n'
  import { message } from 'ant-design-vue'
+ import { CopyOutlined } from '@ant-design/icons-vue'
 
  export default {
    name: "Document",
    components: {
+     CopyOutlined,
      editor: VAceEditor,
      "DataType": defineAsyncComponent(() => import('./DataType.vue')),
      "EditorShow": defineAsyncComponent(() => import('./EditorShow.vue'))

@@ -1,15 +1,15 @@
 #### 安装
 ```
-yarn install
+npm install
 ```
 
 #### 开发
 ```
-yarn dev
+npm run dev
 ```
 访问 `http://localhost:5173/doc.html`
 
 #### 打包
 ```
-yarn build
+npm run build
 ```

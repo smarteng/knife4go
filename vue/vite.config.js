@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import Components from 'unplugin-vue-components/vite'
@@ -12,6 +12,14 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 // package.json 设置 "type": "module" 后 __dirname 在 ESM 下不再存在，
 // 用 import.meta.url 手工推导等价值，供下方 resolve(__dirname, 'src') 使用。
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// 后端服务地址取自环境文件 .env.development 的 VITE_APP_PROXY_TARGET。
+// vite.config.js 运行在 Node 侧，.env 文件不会自动注入，需用 loadEnv 显式加载
+// （第三个参数传 '' 表示不过滤前缀，否则只返回 VITE_ 开头的变量）。
+// proxy 只作用于开发服务器，故这里固定读取 development 环境文件。
+const env = loadEnv('development', process.cwd(), '')
+// 未配置时回退到默认端口 14010，避免代理目标为空导致 dev server 启动失败。
+const backendTarget = env.VITE_APP_PROXY_TARGET || 'http://localhost:14010'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -51,7 +59,7 @@ export default defineConfig({
       // 后端 knife4go 将 API 文档 JSON 端点注册在 /swagger/doc.json，
       // /swagger 前缀的请求原样透传到后端，不做 rewrite。
       '/swagger': {
-        target: `http://localhost:14010`,
+        target: backendTarget,
         changeOrigin: true
       },
       // knife4j 前端在开发环境（doc.html 位于站点根路径）会请求相对路径
@@ -61,7 +69,7 @@ export default defineConfig({
       // 生产环境后端 docPath 通常为 /swagger/index.html，浏览器会自动加上 /swagger
       // 前缀，不再走此规则，故本规则仅对开发环境生效。
       '/v3/api-docs': {
-        target: `http://localhost:14010`,
+        target: backendTarget,
         changeOrigin: true,
         rewrite: (p) => '/swagger' + p
       }

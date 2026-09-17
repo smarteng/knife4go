@@ -132,13 +132,58 @@
 }
 
 
+/**
+* 左侧接口菜单树：请求方法标签
+* 统一的圆角标签底色为灰,再按方法覆写为对应色;标签底色与接口详情页保持一致
+*/
 .knife4j-menu-line {
-  /* left: 10px;
-  position: absolute;
-  */
-  width: 65px;
   display: inline-block;
+  box-sizing: border-box;
+  min-width: 50px;
+  height: 20px;
+  padding: 0 6px;
+  margin-right: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0.3px;
+  text-align: center;
+  vertical-align: middle;
+  color: #fff;
+  background: #8c8c8c;
+  border-radius: 4px;
+}
 
+.knife4j-menu-method-get {
+  background: #61affe;
+}
+
+.knife4j-menu-method-post {
+  background: #49cc90;
+}
+
+.knife4j-menu-method-put {
+  background: #fca130;
+}
+
+.knife4j-menu-method-delete {
+  background: #f93e3e;
+}
+
+.knife4j-menu-method-patch {
+  background: #50e3c2;
+}
+
+.knife4j-menu-method-head {
+  background: #9012fe;
+}
+
+.knife4j-menu-method-options {
+  background: #0d5aa7;
+}
+
+.knife4j-menu-method-trace {
+  background: #7857fe;
 }
 
 .knife4j-menu-left-style {
@@ -376,10 +421,65 @@
 
 .knife4j-api-copy-address {
   font-size: 12px;
-  cursor: pointer;
   text-align: center;
-  font-weight: 100;
   color: #0b0a0a;
+
+  /* 三个复制按钮成组展示,彼此之间只保留固定间距 */
+  .knife4j-copy-btn+.knife4j-copy-btn {
+    margin-left: 12px;
+  }
+}
+
+/**
+* 通用复制按钮
+* 统一各复制入口(复制接口/复制文档/复制地址/Raw/Curl/OpenAPI)的外观:
+* 白底、浅灰描边、圆角，复制图标在左，hover 时描边与文字变蓝。
+* 既可用于普通 span，也可直接加在 a-button 上。
+*/
+.knife4j-copy-btn {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(0, 0, 0, 0.85);
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+
+  .anticon {
+    margin-right: 5px;
+    font-size: 14px;
+  }
+
+  &:hover {
+    color: #1677ff;
+    border-color: #1677ff;
+  }
+
+  /* antd 按钮默认样式优先级较低,这里显式覆盖高度/圆角/配色 */
+  &.ant-btn {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.85);
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+
+    &:hover {
+      color: #1677ff;
+      border-color: #1677ff;
+    }
+  }
 }
 
 .knife4j-api-title {
@@ -505,7 +605,11 @@
 }
 
 .knife4j-api-send {
-  width: 10%;
+  /* 发送按钮按内容宽度展示:它所在的 a-input-group 占满整行(span=24),
+     原先写死 width: 10% 会在宽屏下被拉得很长。
+     注意「选择文件」按钮同样带该类,但它自带 inline width:80px,优先级更高不受影响。 */
+  width: auto;
+  min-width: 65px;
 }
 
 .knife4j-debug-param-count {
@@ -769,4 +873,47 @@
 .knife4j-debug-editor-field-description {
   position: absolute;
   color: #8c8c8c;
+}
+
+/**
+* -----------------------------
+* 接口详情左侧标签栏(文档/调试/Open/Script)
+* ------------------------------
+* 四个标签的图标来源不同(my-icon 图标字体 vs @ant-design/icons 组件),实际宽度与基线不一致,
+* 会出现文字起始位置参差、图标与文字上下错位的问题。
+* 这里统一按 flex 行处理:图标固定为 16px 盒子并居中,图标与文字整体垂直居中,
+* 从而保证四个标签的图标列、文字列分别对齐。
+*/
+.api-tab.ant-tabs-left {
+
+  /* 必须用「直接子级」限定标签栏:调试页等内层 tabs 也嵌套在本组件内部,
+     但它们位于 .ant-tabs-content 里,不是根节点的直接子级,因此不会被误伤。 */
+  >.ant-tabs-nav {
+
+    .ant-tabs-tab {
+      display: flex;
+      align-items: center;
+
+      /* v3 的标签内容包在 .ant-tabs-tab-btn 里(与 v1 直接放 span 不同),
+         让它撑满标签并左对齐,保证四个标签的图标列、文字列分别对齐 */
+      .ant-tabs-tab-btn {
+        display: inline-flex;
+        flex: 1;
+        align-items: center;
+      }
+
+      .anticon {
+        display: inline-flex;
+        flex: 0 0 16px;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+        font-size: 16px;
+        line-height: 16px;
+        vertical-align: middle;
+      }
+    }
+  }
 }
